@@ -6,8 +6,8 @@
 
 from fastapi import FastAPI, WebSocket
 
+from idiots._idiots import IdiotRegistry
 from operations.connections import connect_idiot
-from operations.registry import IdiotRegistry
 
 
 app = FastAPI(title="D.I.P.S.H.I.T. Moderator")
