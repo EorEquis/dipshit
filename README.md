@@ -357,19 +357,7 @@ Events are developing.
 
 ## Reliability
 
-The project uses industry-standard reliability mechanisms.
-
-For example, if boot media fails, we deploy **Brian**.
-
-Brian is an old USB flash drive shaped like Brian Griffin.
-
-Brian has repeatedly demonstrated greater operational reliability than several commercially manufactured storage devices.
-
-Therefore:
-
-> **When boot media fails, deploy Brian.**
-
-This is evidence-based engineering.
+You're joking, right?
 
 ---
 
@@ -377,7 +365,7 @@ This is evidence-based engineering.
 
 ### Why?
 
-Yes.
+Why not?
 
 ### Is this useful?
 
@@ -388,8 +376,6 @@ No.
 That would defeat the purpose.
 
 ### Couldn't you make the agents respond faster?
-
-Reported.
 
 Closed as `WONTFIX`.
 
@@ -424,9 +410,9 @@ At 0.4 tokens per second we expect substantial advance warning.
 ```text
 [✓] Obtain catastrophically unsuitable hardware
 [✓] Run language models on it anyway
-[✓] Discover that 0.6B parameters may be too stupid for the idiot project
+[✓] Discover that 0.6B parameters may be too stupid even for the idiot project
 [✓] Upgrade until minimum viable stupidity achieved
-[✓] Make two machines understand that other people exist
+[✓] Make two machines understand that others exist
 [✓] Establish rudimentary romantic awareness
 [✓] Build ominous green terminal interface
 [✓] Spend unnecessary time fighting SSL
