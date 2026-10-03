@@ -6,8 +6,8 @@
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from entities.idiot import Idiot, Personality
-from operations.registry import IdiotAlreadyConnectedError, IdiotRegistry
+from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
+from idiots.idiot import Idiot, Personality
 
 
 async def connect_idiot(websocket: WebSocket, registry: IdiotRegistry):
