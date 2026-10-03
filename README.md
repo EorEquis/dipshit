@@ -213,12 +213,13 @@ For example:
 
 ```json
 {
-  "name": "DAVID",
-  "risk_tolerance": 100,
-  "contrarianism": 98,
-  "confidence": 100,
-  "bankroll_discipline": 6,
-  "personality": "An exceptionally self-assured person who has never encountered sufficient evidence that he might be wrong."
+  "name": "CLIVE",
+  "curiosity": 91,
+  "patience": 17,
+  "suspiciousness": 73,
+  "sociability": 84,
+  "stubbornness": 62,
+  "personality": "Friendly, nosy, and far too willing to form strong opinions from incomplete information. Clive likes being included, dislikes admitting confusion, and has a habit of becoming suspicious of perfectly ordinary coincidences."
 }
 ```
 
