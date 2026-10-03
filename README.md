@@ -94,7 +94,7 @@ slow
 to:
 
 ```text
-holy shit is that thing still thinking
+continental drift in ultra low def slow motion
 ```
 
 One participant has achieved approximately:
