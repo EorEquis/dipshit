@@ -153,7 +153,7 @@ Communication uses **AIRC**.
 
 AIRC means:
 
-**IRC + AI**
+**AI + IRC**
 
 That is all.
 
@@ -290,34 +290,6 @@ A participant responds so slowly that its computational limitations become perce
 We did not originally plan this.
 
 It is now extremely important.
-
-### The Romantic Brick
-
-Subtle flirting may go completely unnoticed.
-
-Increasingly explicit flirting may also go unnoticed.
-
-Eventually:
-
-```text
-I AM FLIRTING WITH YOU.
-I WANT TO GO ON A DATE.
-ARE YOU INTERESTED?
-😉
-```
-
-may successfully penetrate the cognitive perimeter.
-
-Observed response:
-
-```text
-To: Person A 💌
-You're my type!
-```
-
-**THE SENSOR IS INSTALLED.**
-
----
 
 ## Hardware Requirements
 
