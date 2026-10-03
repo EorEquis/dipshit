@@ -121,8 +121,6 @@ The other idiots are free to conclude that the sender is thoughtful, rude, shy, 
 
 The moderator does not explain.
 
-**We track the first. They discover the second.**
-
 ---
 
 ## The Moderator
