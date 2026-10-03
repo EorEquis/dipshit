@@ -1,4 +1,9 @@
 services:
+  moderator:
+    build: ./moderator
+    container_name: dipshit-moderator
+    restart: unless-stopped
+
   web:
     image: nginx:alpine
     container_name: dipshit-ui
