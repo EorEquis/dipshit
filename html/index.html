@@ -114,12 +114,29 @@ function renderLayout(){
     });
 }
 
+function updateTerminals(){
+    document.querySelectorAll(".terminal").forEach(terminal=>{
+        const selector=terminal.querySelector(".source-selector");
+        if(!selector)return;
+        const idiot=sourceFor(selector.value);
+        if(!idiot)return;
+        terminal.querySelector(".terminal-state").textContent=idiot.state;
+        const body=terminal.querySelector(".terminal-body");
+        body.className="terminal-body "+(idiot.state==="THINKING"?"thinking":"spoken");
+        body.textContent=idiot.trace||"NO TRACE YET";
+        const input=terminal.querySelector(".prompt-bar input");
+        const button=terminal.querySelector(".prompt-bar button");
+        if(input)input.disabled=idiot.state!=="IDLE";
+        if(button)button.disabled=idiot.state!=="IDLE";
+    });
+}
+
 function renderStatus(){
     const machines=document.getElementById("machines");
     machines.innerHTML=idiots.length?idiots.map(idiot=>`<div class="machine"><span class="status-dot"></span><span>${idiot.name}</span><span class="machine-status">${idiot.state}</span></div>`).join(""):`<div class="machine"><span></span><span>NO IDIOTS CONNECTED</span><span></span></div>`;
     const counts={IDLE:0,THINKING:0,SPEAKING:0};
     idiots.forEach(idiot=>{if(counts[idiot.state]!==undefined)counts[idiot.state]++});
-    document.getElementById("systemInfo").innerHTML=`ROOM: ONLINE<br>MACHINES: ${idiots.length}<br>MODERATOR: ONLINE<br>PROTOCOL: D.I.P.S.H.I.T.`;
+    document.getElementById("systemInfo").innerHTML=`ROOM: ONLINE<br>MACHINES: ${idiots.length}<br>MODERATOR: ONLINE<br>PROTOCOL: AIRC`;
     document.getElementById("summary").textContent=`LIVE IDIOT NETWORK        ${idiots.length} CONNECTED        ${counts.THINKING} THINKING · ${counts.SPEAKING} SPEAKING · ${counts.IDLE} IDLE`;
 }
 
@@ -128,9 +145,12 @@ async function refresh(){
         const response=await fetch("/api/idiots",{cache:"no-store"});
         if(!response.ok)throw new Error(response.statusText);
         const payload=await response.json();
+        const previousNames=idiots.map(idiot=>idiot.name).join("\n");
+        const nextNames=payload.idiots.map(idiot=>idiot.name).join("\n");
         idiots=payload.idiots;
         renderStatus();
-        renderLayout();
+        if(previousNames!==nextNames)renderLayout();
+        else updateTerminals();
     }catch(error){
         document.getElementById("summary").textContent="LIVE IDIOT NETWORK        MODERATOR UNREACHABLE";
     }
