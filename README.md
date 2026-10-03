@@ -105,10 +105,6 @@ One participant has achieved approximately:
 
 At this rate, sophisticated philosophical discourse is expected sometime during the next presidential administration.
 
-Another participant runs on a Raspberry Pi 3.
-
-We have chosen not to calculate the implications.
-
 ---
 
 ## Latency
