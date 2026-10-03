@@ -314,6 +314,7 @@ Ideal hardware includes:
 - machines found behind furniture
 - computers whose manufacturers have stopped admitting they made them
 - anything that prompts the initial thought : "There is no fucking way this thing can run an LLM."
+- anything that produces output at a speed best measured by carbon dating
 
 The preferred deployment target is:
 
