@@ -25,6 +25,7 @@ class Idiot:
     )
     connection_id: UUID = field(default_factory=uuid4)
     state: str = "IDLE"
+    trace: str = ""
 
     def connected_payload(self):
         return {

@@ -1,16 +1,17 @@
 ###################
 # Created : 2026-10-03 GB
 # Purpose : Main entry point for the D.I.P.S.H.I.T. moderator service.
-# Notes   : Provides the persistent idiot connection endpoint and live registry.
+# Notes   : Provides persistent idiot connections, live status, and manual test prompts.
 ###################
 
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, HTTPException, WebSocket
 
 from idiots._idiots import IdiotRegistry
-from operations.connections import connect_idiot
+from operations.connections import IdiotConnections, connect_idiot
 
 
 app = FastAPI(title="D.I.P.S.H.I.T. Moderator")
+connections = IdiotConnections()
 registry = IdiotRegistry()
 
 
@@ -21,6 +22,31 @@ async def get_idiots():
     }
 
 
+@app.post("/api/idiots/{name}/prompt")
+async def prompt_idiot(name: str, payload: dict):
+    idiot = registry.get(name)
+
+    if idiot is None:
+        raise HTTPException(status_code=404, detail=f'Idiot "{name}" is not connected.')
+
+    if idiot.state != "IDLE":
+        raise HTTPException(status_code=409, detail=f'Idiot "{idiot.name}" is {idiot.state}.')
+
+    prompt = payload.get("prompt")
+
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise HTTPException(status_code=400, detail="Prompt must be a non-empty string.")
+
+    idiot.trace = ""
+    await connections.send_prompt(idiot, prompt.strip())
+
+    return {
+        "name": idiot.name,
+        "prompt": prompt.strip(),
+        "type": "prompt_sent"
+    }
+
+
 @app.websocket("/ws/idiot")
 async def idiot_connection(websocket: WebSocket):
-    await connect_idiot(websocket, registry)
+    await connect_idiot(websocket, registry, connections)

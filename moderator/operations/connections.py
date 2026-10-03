@@ -10,6 +10,34 @@ from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
 from idiots.idiot import Idiot, Personality
 
 
+class IdiotConnections:
+    @staticmethod
+    def _key(name):
+        return name.casefold()
+
+    def __init__(self):
+        self._websockets = {}
+
+    def add(self, idiot: Idiot, websocket: WebSocket):
+        self._websockets[self._key(idiot.name)] = websocket
+
+    def remove(self, idiot: Idiot):
+        self._websockets.pop(self._key(idiot.name), None)
+
+    async def send_prompt(self, idiot: Idiot, prompt: str):
+        websocket = self._websockets.get(self._key(idiot.name))
+
+        if websocket is None:
+            raise ValueError(f'Idiot "{idiot.name}" is not connected.')
+
+        await websocket.send_json(
+            {
+                "prompt": prompt,
+                "type": "prompt"
+            }
+        )
+
+
 def _parse_connection(payload):
     if not isinstance(payload, dict):
         raise ValueError("Connection payload must be a JSON object.")
@@ -58,6 +86,25 @@ def _parse_personality(payload):
     )
 
 
+async def _receive_idiot_message(idiot: Idiot, payload):
+    if not isinstance(payload, dict):
+        return
+
+    message_type = payload.get("type")
+
+    if message_type == "state":
+        state = payload.get("state")
+
+        if state in {"IDLE", "SPEAKING", "THINKING"}:
+            idiot.state = state
+
+    elif message_type == "trace":
+        content = payload.get("content")
+
+        if isinstance(content, str):
+            idiot.trace += content
+
+
 async def _reject_connection(websocket, error):
     await websocket.send_json(
         {
@@ -68,7 +115,11 @@ async def _reject_connection(websocket, error):
     await websocket.close(code=1008)
 
 
-async def connect_idiot(websocket: WebSocket, registry: IdiotRegistry):
+async def connect_idiot(
+    websocket: WebSocket,
+    registry: IdiotRegistry,
+    connections: IdiotConnections
+):
     await websocket.accept()
 
     idiot = None
@@ -77,11 +128,13 @@ async def connect_idiot(websocket: WebSocket, registry: IdiotRegistry):
         payload = await websocket.receive_json()
         idiot = _parse_connection(payload)
         registry.add(idiot)
+        connections.add(idiot, websocket)
 
         await websocket.send_json(idiot.connected_payload())
 
         while True:
-            await websocket.receive()
+            payload = await websocket.receive_json()
+            await _receive_idiot_message(idiot, payload)
 
     except IdiotAlreadyConnectedError as error:
         await _reject_connection(websocket, str(error))
@@ -94,4 +147,5 @@ async def connect_idiot(websocket: WebSocket, registry: IdiotRegistry):
 
     finally:
         if idiot is not None:
+            connections.remove(idiot)
             registry.remove(idiot)
