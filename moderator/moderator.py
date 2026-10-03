@@ -37,6 +37,7 @@ async def prompt_idiot(name: str, payload: dict):
     if not isinstance(prompt, str) or not prompt.strip():
         raise HTTPException(status_code=400, detail="Prompt must be a non-empty string.")
 
+    idiot.state = "THINKING"
     idiot.trace = ""
     await connections.send_prompt(idiot, prompt.strip())
 
