@@ -52,6 +52,30 @@ function roomText(){
     }).join("\n\n");
 }
 
+function renderIdiotTrace(body,trace){
+    body.innerHTML="";
+    const parts=trace.split(/(\[Start thinking\]|\[End thinking\])/);
+    let thinking=false;
+
+    parts.forEach(part=>{
+        if(!part)return;
+        const span=document.createElement("span");
+
+        if(part==="[Start thinking]"){
+            thinking=true;
+            span.className="thinking";
+        }else if(part==="[End thinking]"){
+            span.className="thinking";
+            thinking=false;
+        }else{
+            span.className=thinking?"thinking":"spoken";
+        }
+
+        span.textContent=part;
+        body.appendChild(span);
+    });
+}
+
 function isAtBottom(element){
     return element.scrollHeight-element.scrollTop-element.clientHeight<=24;
 }
@@ -89,8 +113,7 @@ function renderTerminal(sourceName,index){
     const body=terminal.querySelector(".terminal-body");
 
     if(idiot){
-        body.className+=" "+(idiot.state==="THINKING"?"thinking":"spoken");
-        body.textContent=idiot.trace||"NO TRACE YET";
+        renderIdiotTrace(body,idiot.trace||"NO TRACE YET");
         const bar=document.createElement("div");
         bar.className="prompt-bar";
         const input=document.createElement("input");
@@ -154,10 +177,10 @@ function updateTerminals(){
         terminal.querySelector(".terminal-state").textContent=idiot.state;
         const body=terminal.querySelector(".terminal-body");
         const followTrace=isAtBottom(body);
-        body.className="terminal-body "+(idiot.state==="THINKING"?"thinking":"spoken");
+        body.className="terminal-body";
         const trace=idiot.trace||"NO TRACE YET";
         if(body.textContent!==trace){
-            body.textContent=trace;
+            renderIdiotTrace(body,trace);
             if(followTrace)scrollToBottom(body);
         }
         const input=terminal.querySelector(".prompt-bar input");
