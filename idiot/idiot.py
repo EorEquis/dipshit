@@ -107,9 +107,10 @@ async def _read_turn(websocket, process, process_started=False):
                     )
                 )
                 speaking = False
-            elif len(speech_buffer) > 10:
-                speech_content = speech_buffer[:-10]
-                speech_buffer = speech_buffer[-10:]
+            elif len(speech_buffer) > len("\n[ Prompt:"):
+                keep = len("\n[ Prompt:") - 1
+                speech_content = speech_buffer[:-keep]
+                speech_buffer = speech_buffer[-keep:]
 
                 await websocket.send(
                     json.dumps(
