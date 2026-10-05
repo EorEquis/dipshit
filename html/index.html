@@ -4,554 +4,161 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>D.I.P.S.H.I.T. — Live Idiot Network</title>
-
 <style>
-    :root {
-        --black: #020502;
-        --panel: #050a05;
-
-        --green: #71ff71;
-        --green-bright: #a0ffa0;
-        --green-dim: #3d8f3d;
-        --green-faint: #1d461d;
-        --border: #326c32;
-
-        --chrome: #e2e2da;
-        --chrome-dim: #c0c0b8;
-        --chrome-faint: #666662;
-        --chrome-border: #555550;
-
-        --sidebar-width: 275px;
-    }
-
-    * {
-        box-sizing: border-box;
-    }
-
-    html, body {
-        margin: 0;
-        height: 100%;
-        background: var(--black);
-        color: var(--green);
-        font-family: "Courier New", Courier, monospace;
-        overflow: hidden;
-    }
-
-    body {
-        text-shadow: 0 0 4px rgba(113, 255, 113, 0.22);
-    }
-
-    .app {
-        display: grid;
-        grid-template-columns: var(--sidebar-width) 1fr;
-        height: 100vh;
-    }
-
-    /* ---------- SIDEBAR ---------- */
-
-    .sidebar {
-        border-right: 1px solid var(--chrome-border);
-        background: #171917;
-        color: var(--chrome);
-        padding: 18px;
-        overflow-y: auto;
-    }
-
-    .brand {
-    margin-bottom: 48px;
-    }
-
-    .brand h1 {
-        margin: 0;
-        color: var(--chrome);
-        font-size: 26px;
-        letter-spacing: 2px;
-    }
-
-    .brand .subtitle {
-        margin-top: 8px;
-        color: var(--chrome-dim);
-        font-size: 14px;
-        line-height: 1.4;
-        text-transform: uppercase;
-    }
-
-    .section {
-        margin-bottom: 28px;
-    }
-
-    .section-title {
-        border-bottom: 1px solid var(--chrome-faint);
-        padding-bottom: 6px;
-        margin-bottom: 10px;
-        color: var(--chrome-dim);
-        font-size: 14px;
-        letter-spacing: 1px;
-    }
-
-    select {
-        width: 100%;
-        padding: 8px;
-        background: var(--black);
-        color: var(--green);
-        border: 1px solid var(--border);
-        font-family: inherit;
-        outline: none;
-    }
-
-    select:focus {
-        border-color: var(--green-bright);
-    }
-
-    #layoutSelector {
-        color: var(--chrome);
-        border-color: var(--chrome-border);
-    }    
-
-    .machine {
-        display: grid;
-        grid-template-columns: 12px 1fr auto;
-        gap: 7px;
-        align-items: center;
-        padding: 8px 0;
-        font-size: 16px;
-        color: #d0d0c8;
-    }
-
-    .status-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--green);
-        box-shadow: 0 0 6px var(--green);
-    }
-
-    .machine-status {
-        color: var(--chrome);
-        font-size: 11px;
-    }
-
-    .system-info {
-        color: var(--chrome-dim);
-        font-size: 14px;
-        line-height: 1.8;
-    }
-
-    /* ---------- MAIN AREA ---------- */
-
-    .main {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        min-height: 0;
-    }
-
-    .topbar {
-        height: 42px;
-        min-height: 42px;
-        background: #171917;
-        border-bottom: 1px solid var(--chrome-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 14px;
-        color: var(--chrome-dim);
-        font-size: 11px;
-    }
-
-    .network-status {
-        color: var(--green);
-    }
-
-    .terminal-grid {
-        flex: 1;
-        display: grid;
-        gap: 8px;
-        padding: 8px;
-        min-height: 0;
-    }
-
-    .layout-1x1 {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr;
-    }
-
-    .layout-1x2 {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(2, 1fr);
-    }
-
-    .layout-2x1 {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: 1fr;
-    }
-
-    .layout-2x2 {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(2, 1fr);
-    }
-
-    .layout-3x2 {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(2, 1fr);
-    }
-
-    /* ---------- TERMINALS ---------- */
-
-    .terminal {
-        border: 1px solid var(--border);
-        background: var(--panel);
-        min-width: 0;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-    }
-
-    .terminal::after {
-        content: "";
-        pointer-events: none;
-        position: absolute;
-        inset: 0;
-        background:
-            repeating-linear-gradient(
-                to bottom,
-                rgba(0,0,0,0) 0px,
-                rgba(0,0,0,0) 2px,
-                rgba(0,0,0,0.09) 3px
-            );
-    }
-
-    .terminal-header {
-        height: 32px;
-        min-height: 32px;
-        border-bottom: 1px solid var(--green-faint);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 0 9px;
-        z-index: 1;
-    }
-
-    .terminal-header select {
-        width: auto;
-        min-width: 145px;
-        border: none;
-        padding: 2px 18px 2px 2px;
-        color: var(--green-bright);
-        font-size: 13px;
-    }
-
-    .terminal-state {
-        margin-left: auto;
-        color: var(--green-dim);
-        font-size: 11px;
-        letter-spacing: 1px;
-    }
-
-    .terminal-body {
-        flex: 1;
-        padding: 12px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        font-size: 14px;
-        line-height: 1.55;
-        scrollbar-color: var(--green-faint) var(--black);
-        z-index: 1;
-    }
-
-    .thinking {
-        color: var(--green-dim);
-    }
-
-    .spoken {
-        color: var(--green-bright);
-    }
-
-    .speaker {
-        color: var(--green);
-        font-weight: bold;
-    }
-
-    .timestamp {
-        color: var(--green-dim);
-    }
-
-    .system-message {
-        color: var(--green-dim);
-    }
-
-    .empty {
-        color: var(--green-faint);
-    }
-
-    @media (max-width: 900px) {
-        :root {
-            --sidebar-width: 220px;
-        }
-
-        .layout-3x2 {
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-        }
-    }
+:root{--black:#020502;--panel:#050a05;--green:#71ff71;--green-bright:#a0ffa0;--green-dim:#3d8f3d;--green-faint:#1d461d;--border:#326c32;--chrome:#e2e2da;--chrome-dim:#c0c0b8;--chrome-faint:#666662;--chrome-border:#555550;--sidebar-width:275px}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--black);color:var(--green);font-family:"Courier New",Courier,monospace;overflow:hidden}body{text-shadow:0 0 4px rgba(113,255,113,.22)}
+.app{display:grid;grid-template-columns:var(--sidebar-width) 1fr;height:100vh}.sidebar{border-right:1px solid var(--chrome-border);background:#171917;color:var(--chrome);padding:18px;overflow-y:auto}.brand{margin-bottom:48px}.brand h1{margin:0;color:var(--chrome);font-size:26px;letter-spacing:2px}.brand .subtitle{margin-top:8px;color:var(--chrome-dim);font-size:14px;line-height:1.4;text-transform:uppercase}.section{margin-bottom:28px}.section-title{border-bottom:1px solid var(--chrome-faint);padding-bottom:6px;margin-bottom:10px;color:var(--chrome-dim);font-size:14px;letter-spacing:1px}
+select,input,button{background:var(--black);color:var(--green);border:1px solid var(--border);font-family:inherit;outline:none}select{width:100%;padding:8px}button{padding:7px 12px;cursor:pointer}button:disabled{color:var(--green-faint);cursor:not-allowed}#layoutSelector{color:var(--chrome);border-color:var(--chrome-border)}
+.machine{display:grid;grid-template-columns:12px 1fr auto;gap:7px;align-items:center;padding:8px 0;font-size:16px;color:#d0d0c8}.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}.machine-status{color:var(--chrome);font-size:11px}.system-info{color:var(--chrome-dim);font-size:14px;line-height:1.8}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}.topbar{height:42px;min-height:42px;background:#171917;border-bottom:1px solid var(--chrome-border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:var(--chrome-dim);font-size:11px}.network-status{color:var(--green)}.terminal-grid{flex:1;display:grid;gap:8px;padding:8px;min-height:0}.layout-1x1{grid-template-columns:1fr;grid-template-rows:1fr}.layout-1x2{grid-template-columns:1fr;grid-template-rows:repeat(2,1fr)}.layout-2x1{grid-template-columns:repeat(2,1fr);grid-template-rows:1fr}.layout-2x2{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)}.layout-3x2{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr)}
+.terminal{border:1px solid var(--border);background:var(--panel);min-width:0;min-height:0;display:flex;flex-direction:column;position:relative}.terminal::after{content:"";pointer-events:none;position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.09) 3px)}.terminal-header{height:32px;min-height:32px;border-bottom:1px solid var(--green-faint);display:flex;align-items:center;gap:10px;padding:0 9px;z-index:1}.terminal-header select{width:auto;min-width:145px;border:none;padding:2px 18px 2px 2px;color:var(--green-bright);font-size:13px}.terminal-state{margin-left:auto;color:var(--green-dim);font-size:11px;letter-spacing:1px}.terminal-body{flex:1;padding:12px;overflow-y:auto;white-space:pre-wrap;font-size:14px;line-height:1.55;scrollbar-color:var(--green-faint) var(--black);z-index:1}.thinking{color:var(--green-dim)}.spoken{color:var(--green-bright)}.empty{color:var(--green-faint)}
+.prompt-bar{display:flex;gap:8px;padding:8px;border-top:1px solid var(--green-faint);z-index:1}.prompt-bar input{flex:1;padding:7px;min-width:0}
+@media(max-width:900px){:root{--sidebar-width:220px}.layout-3x2{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr)}}
 </style>
 </head>
-
 <body>
-
 <div class="app">
-
-    <aside class="sidebar">
-
-        <div class="brand">
-            <h1>D.I.P.S.H.I.T.</h1>
-            <div class="subtitle">
-                Distributed Idiot Protocol<br>
-                for Shared Hallucination,<br>
-                Inference, and Thought
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">TERMINAL LAYOUT</div>
-
-            <select id="layoutSelector">
-                <option value="1x1">1 × 1</option>
-                <option value="1x2">1 × 2</option>
-                <option value="2x1">2 × 1</option>
-                <option value="2x2" selected>2 × 2</option>
-                <option value="3x2">3 × 2</option>
-            </select>
-        </div>
-
-        <div class="section">
-            <div class="section-title">CONNECTED MACHINES</div>
-
-            <div class="machine">
-                <span class="status-dot"></span>
-                <span>DEEPTHOUGHT</span>
-                <span class="machine-status">THINKING</span>
-            </div>
-
-            <div class="machine">
-                <span class="status-dot"></span>
-                <span>MARVIN</span>
-                <span class="machine-status">IDLE</span>
-            </div>
-
-            <div class="machine">
-                <span class="status-dot"></span>
-                <span>ABBY NORMAL</span>
-                <span class="machine-status">SPEAKING</span>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">SYSTEM</div>
-
-            <div class="system-info">
-                ROOM: ONLINE<br>
-                MACHINES: 3<br>
-                MODERATOR: ONLINE<br>
-                PROTOCOL: D.I.P.S.H.I.T.
-            </div>
-        </div>
-
-    </aside>
-
-    <main class="main">
-
-        <div class="topbar">
-            <span>LIVE IDIOT NETWORK        3 CONNECTED        1 THINKING · 1 SPEAKING · 1 IDLE        ● SYSTEM ONLINE</span>
-            <span class="network-status">● SYSTEM ONLINE</span>
-        </div>
-
-        <div id="terminalGrid" class="terminal-grid layout-2x2"></div>
-
-    </main>
-
+<aside class="sidebar">
+<div class="brand"><h1>D.I.P.S.H.I.T.</h1><div class="subtitle">Distributed Idiot Protocol<br>for Shared Hallucination,<br>Inference, and Thought</div></div>
+<div class="section"><div class="section-title">TERMINAL LAYOUT</div><select id="layoutSelector"><option value="1x1">1 × 1</option><option value="1x2">1 × 2</option><option value="2x1">2 × 1</option><option value="2x2" selected>2 × 2</option><option value="3x2">3 × 2</option></select></div>
+<div class="section"><div class="section-title">CONNECTED MACHINES</div><div id="machines"></div></div>
+<div class="section"><div class="section-title">SYSTEM</div><div id="systemInfo" class="system-info"></div></div>
+</aside>
+<main class="main"><div class="topbar"><span id="summary">LIVE IDIOT NETWORK</span><span class="network-status">● SYSTEM ONLINE</span></div><div id="terminalGrid" class="terminal-grid layout-2x2"></div></main>
 </div>
-
 <script>
-const sources = {
-    "ROOM": {
-        status: "LIVE",
-        type: "room",
-        content:
-`[19:42:03] DEEPTHOUGHT:
-I believe the box labeled APPLES AND ORANGES must contain only apples.
+const layouts={"1x1":1,"1x2":2,"2x1":2,"2x2":4,"3x2":6};
+const grid=document.getElementById("terminalGrid");
+const layoutSelector=document.getElementById("layoutSelector");
+let idiots=[];
+const promptValues={};
+let paneSources=["ROOM","MARVIN","EMPTY","EMPTY","EMPTY","EMPTY"];
 
-[19:48:51] MARVIN:
-I disagree. We should draw from that box first.
+function sourceNames(){return ["ROOM",...idiots.map(i=>i.name),"EMPTY"]}
 
-[19:48:52] SYSTEM:
-ABBY NORMAL HAS ENTERED THE ROOM
-
-[19:49:17] ABBY NORMAL:
-What boxes?`
-    },
-
-    "DEEPTHOUGHT": {
-        status: "THINKING",
-        type: "agent",
-        thinking:
-`===== THINKING =====
-
-Okay, let's think about this carefully. There are three boxes and all of the labels are on incorrect boxes.
-
-Wait. If every label is incorrect, then the box labeled APPLES AND ORANGES cannot contain both.
-
-Now.
-
-Let me think.
-
-Perhaps the important thing is to choose the box whose label gives us the most information...`,
-        spoken:
-`===== SAID =====
-
-I believe we should draw from the box labeled APPLES AND ORANGES.`
-    },
-
-    "MARVIN": {
-        status: "IDLE",
-        type: "agent",
-        thinking:
-`===== THINKING =====
-
-The other model suggests drawing from the mixed-fruit label. I should determine whether this follows logically.
-
-The label must be wrong, so that box contains a single fruit type. Drawing one fruit would therefore identify its entire contents.
-
-This seems promising.`,
-        spoken:
-`===== SAID =====
-
-I agree that the APPLES AND ORANGES box provides the most useful draw.`
-    },
-
-    "ABBY NORMAL": {
-        status: "SPEAKING",
-        type: "agent",
-        thinking:
-`===== THINKING =====
-
-I appear to have entered a conversation involving fruit.
-
-I should probably determine why.`,
-        spoken:
-`===== SAID =====
-
-What boxes?`
-    },
-
-    "EMPTY": {
-        status: "",
-        type: "empty",
-        content: "NO SOURCE SELECTED"
-    }
-};
-
-const layouts = {
-    "1x1": 1,
-    "1x2": 2,
-    "2x1": 2,
-    "2x2": 4,
-    "3x2": 6
-};
-
-const defaultSources = [
-    "ROOM",
-    "DEEPTHOUGHT",
-    "MARVIN",
-    "ABBY NORMAL",
-    "EMPTY",
-    "EMPTY"
-];
-
-const grid = document.getElementById("terminalGrid");
-const layoutSelector = document.getElementById("layoutSelector");
-
-function sourceOptions(selected) {
-    return Object.keys(sources)
-        .map(name =>
-            `<option value="${name}" ${name === selected ? "selected" : ""}>${name}</option>`
-        )
-        .join("");
+function sourceOptions(selected){
+    return sourceNames().map(name=>`<option value="${name}" ${name===selected?"selected":""}>${name}</option>`).join("");
 }
 
-function renderTerminal(sourceName, index) {
-    const source = sources[sourceName];
+function sourceFor(name){return idiots.find(i=>i.name===name)}
 
-    const terminal = document.createElement("div");
-    terminal.className = "terminal";
+async function sendPrompt(name,input,button){
+    const prompt=input.value.trim();
+    if(!prompt)return;
+    button.disabled=true;
+    try{
+        const response=await fetch(`/api/idiots/${encodeURIComponent(name)}/prompt`,{
+            method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})
+        });
+        if(!response.ok){
+            const error=await response.json();
+            throw new Error(error.detail||response.statusText);
+        }
+        input.value="";
+        promptValues[name]="";
+        await refresh();
+    }catch(error){
+        alert(error.message);
+    }finally{button.disabled=false}
+}
 
-    terminal.innerHTML = `
-        <div class="terminal-header">
-            <select class="source-selector" data-index="${index}">
-                ${sourceOptions(sourceName)}
-            </select>
+function renderTerminal(sourceName,index){
+    const terminal=document.createElement("div");
+    terminal.className="terminal";
+    const idiot=sourceFor(sourceName);
+    const status=sourceName==="ROOM"?"LIVE":idiot?idiot.state:"";
+    terminal.innerHTML=`<div class="terminal-header"><select class="source-selector" data-index="${index}">${sourceOptions(sourceName)}</select><span class="terminal-state">${status}</span></div><div class="terminal-body"></div>`;
+    const body=terminal.querySelector(".terminal-body");
 
-            <span class="terminal-state">${source.status}</span>
-        </div>
-
-        <div class="terminal-body"></div>
-    `;
-
-    const body = terminal.querySelector(".terminal-body");
-
-    if (source.type === "agent") {
-        const thinking = document.createElement("div");
-        thinking.className = "thinking";
-        thinking.textContent = source.thinking;
-
-        const spoken = document.createElement("div");
-        spoken.className = "spoken";
-        spoken.textContent = "\n\n" + source.spoken;
-
-        body.appendChild(thinking);
-        body.appendChild(spoken);
+    if(idiot){
+        body.className+=" "+(idiot.state==="THINKING"?"thinking":"spoken");
+        body.textContent=idiot.trace||"NO TRACE YET";
+        const bar=document.createElement("div");
+        bar.className="prompt-bar";
+        const input=document.createElement("input");
+        input.placeholder="MANUAL PROMPT";
+        input.value=promptValues[idiot.name]||"";
+        input.disabled=idiot.state!=="IDLE";
+        input.addEventListener("input",()=>{promptValues[idiot.name]=input.value});
+        const button=document.createElement("button");
+        button.textContent="SEND";
+        button.disabled=idiot.state!=="IDLE";
+        button.addEventListener("click",()=>sendPrompt(idiot.name,input,button));
+        input.addEventListener("keydown",event=>{if(event.key==="Enter")sendPrompt(idiot.name,input,button)});
+        bar.append(input,button);
+        terminal.appendChild(bar);
+    }else if(sourceName==="ROOM"){
+        body.className+=" empty";
+        body.textContent="ROOM SOCIAL FEED NOT IMPLEMENTED";
+    }else{
+        body.className+=" empty";
+        body.textContent="NO SOURCE SELECTED";
     }
-
-    else if (source.type === "room") {
-        body.className += " spoken";
-        body.textContent = source.content;
-    }
-
-    else {
-        body.className += " empty";
-        body.textContent = source.content;
-    }
-
     return terminal;
 }
 
-let paneSources = [...defaultSources];
-
-function renderLayout() {
-    const layout = layoutSelector.value;
-    const count = layouts[layout];
-
-    grid.className = `terminal-grid layout-${layout}`;
-    grid.innerHTML = "";
-
-    for (let i = 0; i < count; i++) {
-        grid.appendChild(renderTerminal(paneSources[i] || "EMPTY", i));
+function renderLayout(){
+    const count=layouts[layoutSelector.value];
+    grid.className=`terminal-grid layout-${layoutSelector.value}`;
+    grid.innerHTML="";
+    for(let i=0;i<count;i++){
+        const desired=paneSources[i]||"EMPTY";
+        const source=sourceNames().includes(desired)?desired:"EMPTY";
+        grid.appendChild(renderTerminal(source,i));
     }
-
-    document.querySelectorAll(".source-selector").forEach(selector => {
-        selector.addEventListener("change", event => {
-            const index = Number(event.target.dataset.index);
-            paneSources[index] = event.target.value;
+    document.querySelectorAll(".source-selector").forEach(selector=>{
+        selector.addEventListener("change",event=>{
+            paneSources[Number(event.target.dataset.index)]=event.target.value;
             renderLayout();
         });
     });
 }
 
-layoutSelector.addEventListener("change", renderLayout);
+function updateTerminals(){
+    document.querySelectorAll(".terminal").forEach(terminal=>{
+        const selector=terminal.querySelector(".source-selector");
+        if(!selector)return;
+        const idiot=sourceFor(selector.value);
+        if(!idiot)return;
+        terminal.querySelector(".terminal-state").textContent=idiot.state;
+        const body=terminal.querySelector(".terminal-body");
+        body.className="terminal-body "+(idiot.state==="THINKING"?"thinking":"spoken");
+        body.textContent=idiot.trace||"NO TRACE YET";
+        const input=terminal.querySelector(".prompt-bar input");
+        const button=terminal.querySelector(".prompt-bar button");
+        if(input)input.disabled=idiot.state!=="IDLE";
+        if(button)button.disabled=idiot.state!=="IDLE";
+    });
+}
 
-renderLayout();
+function renderStatus(){
+    const machines=document.getElementById("machines");
+    machines.innerHTML=idiots.length?idiots.map(idiot=>`<div class="machine"><span class="status-dot"></span><span>${idiot.name}</span><span class="machine-status">${idiot.state}</span></div>`).join(""):`<div class="machine"><span></span><span>NO IDIOTS CONNECTED</span><span></span></div>`;
+    const counts={IDLE:0,THINKING:0,SPEAKING:0};
+    idiots.forEach(idiot=>{if(counts[idiot.state]!==undefined)counts[idiot.state]++});
+    document.getElementById("systemInfo").innerHTML=`ROOM: ONLINE<br>MACHINES: ${idiots.length}<br>MODERATOR: ONLINE<br>PROTOCOL: AIRC`;
+    document.getElementById("summary").textContent=`LIVE IDIOT NETWORK        ${idiots.length} CONNECTED        ${counts.THINKING} THINKING · ${counts.SPEAKING} SPEAKING · ${counts.IDLE} IDLE`;
+}
+
+async function refresh(){
+    try{
+        const response=await fetch("/api/idiots",{cache:"no-store"});
+        if(!response.ok)throw new Error(response.statusText);
+        const payload=await response.json();
+        const previousNames=idiots.map(idiot=>idiot.name).join("\n");
+        const nextNames=payload.idiots.map(idiot=>idiot.name).join("\n");
+        idiots=payload.idiots;
+        renderStatus();
+        if(previousNames!==nextNames)renderLayout();
+        else updateTerminals();
+    }catch(error){
+        document.getElementById("summary").textContent="LIVE IDIOT NETWORK        MODERATOR UNREACHABLE";
+    }
+}
+
+layoutSelector.addEventListener("change",renderLayout);
+refresh();
+setInterval(refresh,1000);
 </script>
-
 </body>
 </html>

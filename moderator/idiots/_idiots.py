@@ -12,6 +12,10 @@ class IdiotAlreadyConnectedError(ValueError):
 
 
 class IdiotRegistry:
+    @staticmethod
+    def _key(name):
+        return name.casefold()
+
     def __init__(self):
         self._idiots = {}
 
@@ -40,14 +44,11 @@ class IdiotRegistry:
                 "connected_at": idiot.connected_at.isoformat(),
                 "connection_id": str(idiot.connection_id),
                 "name": idiot.name,
-                "state": idiot.state
+                "state": idiot.state,
+                "trace": idiot.trace
             }
             for idiot in sorted(
                 self._idiots.values(),
                 key=lambda item: item.name.casefold()
             )
         ]
-
-    @staticmethod
-    def _key(name):
-        return name.casefold()
