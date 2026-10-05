@@ -245,6 +245,10 @@ async def main():
             message = json.loads(raw_message)
 
             if message.get("type") == "prompt":
+                print("\n========== RECEIVED FROM MODERATOR ==========")
+                print(message["prompt"])
+                print("=============================================\n")
+
                 process = await _run_inference(
                     websocket,
                     process,
