@@ -119,7 +119,13 @@ def _parse_personality(payload):
     )
 
 
-async def _receive_idiot_message(idiot: Idiot, payload, room):
+async def _receive_idiot_message(
+    idiot: Idiot,
+    payload,
+    registry: IdiotRegistry,
+    connections: IdiotConnections,
+    room
+):
     if not isinstance(payload, dict):
         return
 
@@ -183,6 +189,22 @@ async def _receive_idiot_message(idiot: Idiot, payload, room):
         if speech is not None:
             speech.complete = True
 
+            if speech.content.lstrip().casefold().startswith("to: everyone"):
+                for recipient in registry.idiots():
+                    if recipient is idiot:
+                        continue
+
+                    await connections.send_message(
+                        recipient,
+                        {
+                            "sent_from": idiot.name,
+                            "message_type": "speech",
+                            "is_private": "no",
+                            "message_content": speech.content.strip(),
+                            "message_age": "0 seconds"
+                        }
+                    )
+
 
 async def _reject_connection(websocket, error):
     await websocket.send_json(
@@ -236,7 +258,13 @@ async def connect_idiot(
 
         while True:
             payload = await websocket.receive_json()
-            await _receive_idiot_message(idiot, payload, room)
+            await _receive_idiot_message(
+                idiot,
+                payload,
+                registry,
+                connections,
+                room
+            )
 
     except IdiotAlreadyConnectedError as error:
         await _reject_connection(websocket, str(error))
