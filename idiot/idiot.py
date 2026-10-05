@@ -1,7 +1,7 @@
 ###################
 # Created : 2026-10-03 GB
 # Purpose : Connects one physical idiot to the D.I.P.S.H.I.T. moderator.
-# Notes   : This first client supports manual prompts and streams raw llama.cpp output.
+# Notes   : Keeps one llama.cpp process alive and transcribes individual turns.
 ###################
 
 import asyncio
@@ -29,30 +29,31 @@ PERSONALITY = {
 }
 
 
-async def _run_inference(websocket, prompt):
-    await websocket.send(json.dumps({"state": "THINKING", "type": "state"}))
-
-    process = await asyncio.create_subprocess_exec(
-        LLAMA,
-        "-m",
-        MODEL,
-        "--ctx-size",
-        CTX_SIZE,
-        "--context-shift",
-        "--simple-io",
-        "-p",
-        prompt,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT
-    )
-
+async def _read_turn(websocket, process):
     recent = ""
+    speaking = False
 
     while True:
         chunk = await process.stdout.read(1)
 
         if not chunk:
-            break
+            return_code = await process.wait()
+
+            await websocket.send(
+                json.dumps(
+                    {
+                        "content": (
+                            f"\n[llama-cli exited unexpectedly with code "
+                            f"{return_code}]\n"
+                        ),
+                        "type": "trace"
+                    }
+                )
+            )
+
+            raise RuntimeError(
+                f"llama-cli exited unexpectedly with code {return_code}"
+            )
 
         content = chunk.decode("utf-8", errors="replace")
         recent = (recent + content)[-64:]
@@ -66,28 +67,55 @@ async def _run_inference(websocket, prompt):
             )
         )
 
-        if "[End thinking]" in recent:
+        if not speaking and "[End thinking]" in recent:
             await websocket.send(
                 json.dumps({"state": "SPEAKING", "type": "state"})
             )
+            speaking = True
             recent = ""
 
-    return_code = await process.wait()
-
-    if return_code != 0:
-        await websocket.send(
-            json.dumps(
-                {
-                    "content": f"\n[llama-cli exited with code {return_code}]\n",
-                    "type": "trace"
-                }
+        if speaking and recent.endswith("\n> "):
+            await websocket.send(
+                json.dumps({"state": "IDLE", "type": "state"})
             )
-        )
+            return
 
-    await websocket.send(json.dumps({"state": "IDLE", "type": "state"}))
+
+async def _run_inference(websocket, process, prompt):
+    await websocket.send(json.dumps({"state": "THINKING", "type": "state"}))
+
+    if process is None:
+        process = await asyncio.create_subprocess_exec(
+            LLAMA,
+            "-m",
+            MODEL,
+            "--ctx-size",
+            CTX_SIZE,
+            "--context-shift",
+            "--simple-io",
+            "-p",
+            prompt,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT
+        )
+    else:
+        if process.returncode is not None:
+            raise RuntimeError(
+                f"llama-cli is not running (code {process.returncode})"
+            )
+
+        process.stdin.write((prompt + "\n").encode("utf-8"))
+        await process.stdin.drain()
+
+    await _read_turn(websocket, process)
+
+    return process
 
 
 async def main():
+    process = None
+
     async with websockets.connect(MODERATOR) as websocket:
         await websocket.send(
             json.dumps(
@@ -113,7 +141,11 @@ async def main():
             message = json.loads(raw_message)
 
             if message.get("type") == "prompt":
-                await _run_inference(websocket, message["prompt"])
+                process = await _run_inference(
+                    websocket,
+                    process,
+                    message["prompt"]
+                )
 
 
 if __name__ == "__main__":
