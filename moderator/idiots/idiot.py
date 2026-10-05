@@ -33,6 +33,7 @@ class Idiot:
         default_factory=lambda: datetime.now(timezone.utc)
     )
     connection_id: UUID = field(default_factory=uuid4)
+    has_received_message: bool = False
     state: str = "IDLE"
     trace: str = ""
 
