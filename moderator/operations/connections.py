@@ -189,6 +189,10 @@ async def _receive_idiot_message(
         if speech is not None:
             speech.complete = True
 
+            if speech.content.strip() == "N_S":
+                room.remove(speech)
+                return
+
             if speech.content.lstrip().casefold().startswith("to: everyone"):
                 for recipient in registry.idiots():
                     if recipient is idiot:
