@@ -42,6 +42,14 @@ function sourceOptions(selected){
 
 function sourceFor(name){return idiots.find(i=>i.name===name)}
 
+function isAtBottom(element){
+    return element.scrollHeight-element.scrollTop-element.clientHeight<=24;
+}
+
+function scrollToBottom(element){
+    element.scrollTop=element.scrollHeight;
+}
+
 async function sendPrompt(name,input,button){
     const prompt=input.value.trim();
     if(!prompt)return;
@@ -106,6 +114,7 @@ function renderLayout(){
         const source=sourceNames().includes(desired)?desired:"EMPTY";
         grid.appendChild(renderTerminal(source,i));
     }
+    grid.querySelectorAll(".terminal-body").forEach(scrollToBottom);
     document.querySelectorAll(".source-selector").forEach(selector=>{
         selector.addEventListener("change",event=>{
             paneSources[Number(event.target.dataset.index)]=event.target.value;
@@ -122,8 +131,10 @@ function updateTerminals(){
         if(!idiot)return;
         terminal.querySelector(".terminal-state").textContent=idiot.state;
         const body=terminal.querySelector(".terminal-body");
+        const followTrace=isAtBottom(body);
         body.className="terminal-body "+(idiot.state==="THINKING"?"thinking":"spoken");
         body.textContent=idiot.trace||"NO TRACE YET";
+        if(followTrace)scrollToBottom(body);
         const input=terminal.querySelector(".prompt-bar input");
         const button=terminal.querySelector(".prompt-bar button");
         if(input)input.disabled=idiot.state!=="IDLE";
