@@ -167,6 +167,10 @@ async def _read_turn(websocket, process, process_started=False):
             recent = ""
 
         if not speaking and speech_id is not None and recent.endswith("\n> "):
+            print("\n========== LLAMA TURN COMPLETE ==========")
+            print(f"recent bytes: {recent.encode('utf-8')!r}")
+            print("=========================================\n")
+
             if trace_buffer:
                 await websocket.send(
                     json.dumps(
@@ -189,6 +193,11 @@ async def _run_inference(websocket, process, prompt):
     process_started = process is None
 
     if process_started:
+        prompt_bytes = prompt.encode("utf-8")
+        print("\n========== LLAMA INITIAL PROMPT ==========")
+        print(f"bytes: {prompt_bytes!r}")
+        print("==========================================\n")
+
         process = await asyncio.create_subprocess_exec(
             LLAMA,
             "-m",
@@ -209,7 +218,12 @@ async def _run_inference(websocket, process, prompt):
                 f"llama-cli is not running (code {process.returncode})"
             )
 
-        process.stdin.write((prompt + "\n").encode("utf-8"))
+        prompt_bytes = (prompt + "\n").encode("utf-8")
+        print("\n========== WRITE TO LLAMA STDIN ==========")
+        print(f"bytes: {prompt_bytes!r}")
+        print("==========================================\n")
+
+        process.stdin.write(prompt_bytes)
         await process.stdin.drain()
 
     await _read_turn(websocket, process, process_started)
