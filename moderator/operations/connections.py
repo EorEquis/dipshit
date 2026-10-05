@@ -7,7 +7,7 @@
 from fastapi import WebSocket, WebSocketDisconnect
 
 from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
-from idiots.idiot import Idiot, Personality, Speech
+from idiots.idiot import Idiot, Personality, RoomEvent
 
 
 class IdiotConnections:
@@ -109,9 +109,11 @@ async def _receive_idiot_message(idiot: Idiot, payload, room):
 
         if isinstance(speech_id, str) and speech_id:
             room.append(
-                Speech(
-                    speaker=idiot.name,
-                    speech_id=speech_id
+                RoomEvent(
+                    source=idiot.name,
+                    event_id=speech_id,
+                    event_type="speech",
+                    complete=False
                 )
             )
 
@@ -124,8 +126,8 @@ async def _receive_idiot_message(idiot: Idiot, payload, room):
                 (
                     item
                     for item in reversed(room)
-                    if item.speech_id == speech_id
-                    and item.speaker == idiot.name
+                    if item.event_id == speech_id
+                    and item.source == idiot.name
                 ),
                 None
             )
@@ -139,8 +141,8 @@ async def _receive_idiot_message(idiot: Idiot, payload, room):
             (
                 item
                 for item in reversed(room)
-                if item.speech_id == speech_id
-                and item.speaker == idiot.name
+                if item.event_id == speech_id
+                and item.source == idiot.name
             ),
             None
         )
@@ -163,7 +165,7 @@ async def connect_idiot(
     websocket: WebSocket,
     registry: IdiotRegistry,
     connections: IdiotConnections,
-    room: list[Speech]
+    room: list[RoomEvent]
 ):
     await websocket.accept()
 
@@ -176,6 +178,15 @@ async def connect_idiot(
         connections.add(idiot, websocket)
 
         await websocket.send_json(idiot.connected_payload())
+
+        room.append(
+            RoomEvent(
+                source="MODERATOR",
+                event_id=str(idiot.connection_id),
+                event_type="presence",
+                content=f"{idiot.name} has entered the room."
+            )
+        )
 
         while True:
             payload = await websocket.receive_json()
