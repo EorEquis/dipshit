@@ -48,7 +48,8 @@ function roomText(){
 
     return roomEvents.map(event=>{
         const status=event.event_type==="speech"&&!event.complete?" [SPEAKING]":"";
-        return `${event.source}${status} > ${event.content}`;
+        const content=event.content.replace(/^\s+/,"");
+        return `${event.source}${status} > ${content}`;
     }).join("\n\n");
 }
 
