@@ -7,7 +7,7 @@
 from fastapi import WebSocket, WebSocketDisconnect
 
 from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
-from idiots.idiot import Idiot, Personality
+from idiots.idiot import Idiot, Personality, RoomEvent
 
 
 class IdiotConnections:
@@ -86,7 +86,7 @@ def _parse_personality(payload):
     )
 
 
-async def _receive_idiot_message(idiot: Idiot, payload):
+async def _receive_idiot_message(idiot: Idiot, payload, room):
     if not isinstance(payload, dict):
         return
 
@@ -104,6 +104,52 @@ async def _receive_idiot_message(idiot: Idiot, payload):
         if isinstance(content, str):
             idiot.trace += content
 
+    elif message_type == "speech_start":
+        speech_id = payload.get("speech_id")
+
+        if isinstance(speech_id, str) and speech_id:
+            room.append(
+                RoomEvent(
+                    source=idiot.name,
+                    event_id=speech_id,
+                    event_type="speech",
+                    complete=False
+                )
+            )
+
+    elif message_type == "speech_chunk":
+        speech_id = payload.get("speech_id")
+        content = payload.get("content")
+
+        if isinstance(speech_id, str) and isinstance(content, str):
+            speech = next(
+                (
+                    item
+                    for item in reversed(room)
+                    if item.event_id == speech_id
+                    and item.source == idiot.name
+                ),
+                None
+            )
+
+            if speech is not None and not speech.complete:
+                speech.content += content
+
+    elif message_type == "speech_end":
+        speech_id = payload.get("speech_id")
+        speech = next(
+            (
+                item
+                for item in reversed(room)
+                if item.event_id == speech_id
+                and item.source == idiot.name
+            ),
+            None
+        )
+
+        if speech is not None:
+            speech.complete = True
+
 
 async def _reject_connection(websocket, error):
     await websocket.send_json(
@@ -118,7 +164,8 @@ async def _reject_connection(websocket, error):
 async def connect_idiot(
     websocket: WebSocket,
     registry: IdiotRegistry,
-    connections: IdiotConnections
+    connections: IdiotConnections,
+    room: list[RoomEvent]
 ):
     await websocket.accept()
 
@@ -132,9 +179,18 @@ async def connect_idiot(
 
         await websocket.send_json(idiot.connected_payload())
 
+        room.append(
+            RoomEvent(
+                source="MODERATOR",
+                event_id=str(idiot.connection_id),
+                event_type="presence",
+                content=f"{idiot.name} has entered the room."
+            )
+        )
+
         while True:
             payload = await websocket.receive_json()
-            await _receive_idiot_message(idiot, payload)
+            await _receive_idiot_message(idiot, payload, room)
 
     except IdiotAlreadyConnectedError as error:
         await _reject_connection(websocket, str(error))

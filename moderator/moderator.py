@@ -13,12 +13,29 @@ from operations.connections import IdiotConnections, connect_idiot
 app = FastAPI(title="D.I.P.S.H.I.T. Moderator")
 connections = IdiotConnections()
 registry = IdiotRegistry()
+room = []
 
 
 @app.get("/api/idiots")
 async def get_idiots():
     return {
         "idiots": registry.snapshot()
+    }
+
+
+@app.get("/api/room")
+async def get_room():
+    return {
+        "events": [
+            {
+                "complete": event.complete,
+                "content": event.content,
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "source": event.source
+            }
+            for event in room
+        ]
     }
 
 
@@ -38,7 +55,6 @@ async def prompt_idiot(name: str, payload: dict):
         raise HTTPException(status_code=400, detail="Prompt must be a non-empty string.")
 
     idiot.state = "THINKING"
-    idiot.trace = ""
     await connections.send_prompt(idiot, prompt.strip())
 
     return {
@@ -50,4 +66,4 @@ async def prompt_idiot(name: str, payload: dict):
 
 @app.websocket("/ws/idiot")
 async def idiot_connection(websocket: WebSocket):
-    await connect_idiot(websocket, registry, connections)
+    await connect_idiot(websocket, registry, connections, room)

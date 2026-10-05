@@ -17,6 +17,15 @@ class Personality:
 
 
 @dataclass(slots=True)
+class RoomEvent:
+    source: str
+    event_id: str
+    event_type: str
+    content: str = ""
+    complete: bool = True
+
+
+@dataclass(slots=True)
 class Idiot:
     name: str
     personality: Personality

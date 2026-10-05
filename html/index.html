@@ -31,6 +31,7 @@ const layouts={"1x1":1,"1x2":2,"2x1":2,"2x2":4,"3x2":6};
 const grid=document.getElementById("terminalGrid");
 const layoutSelector=document.getElementById("layoutSelector");
 let idiots=[];
+let roomEvents=[];
 const promptValues={};
 let paneSources=["ROOM","MARVIN","EMPTY","EMPTY","EMPTY","EMPTY"];
 
@@ -41,6 +42,23 @@ function sourceOptions(selected){
 }
 
 function sourceFor(name){return idiots.find(i=>i.name===name)}
+
+function roomText(){
+    if(!roomEvents.length)return "NO ROOM EVENTS YET";
+
+    return roomEvents.map(event=>{
+        const status=event.event_type==="speech"&&!event.complete?" [SPEAKING]":"";
+        return `${event.source}${status} > ${event.content}`;
+    }).join("\n\n");
+}
+
+function isAtBottom(element){
+    return element.scrollHeight-element.scrollTop-element.clientHeight<=24;
+}
+
+function scrollToBottom(element){
+    element.scrollTop=element.scrollHeight;
+}
 
 async function sendPrompt(name,input,button){
     const prompt=input.value.trim();
@@ -88,8 +106,7 @@ function renderTerminal(sourceName,index){
         bar.append(input,button);
         terminal.appendChild(bar);
     }else if(sourceName==="ROOM"){
-        body.className+=" empty";
-        body.textContent="ROOM SOCIAL FEED NOT IMPLEMENTED";
+        body.textContent=roomText();
     }else{
         body.className+=" empty";
         body.textContent="NO SOURCE SELECTED";
@@ -106,6 +123,7 @@ function renderLayout(){
         const source=sourceNames().includes(desired)?desired:"EMPTY";
         grid.appendChild(renderTerminal(source,i));
     }
+    grid.querySelectorAll(".terminal-body").forEach(scrollToBottom);
     document.querySelectorAll(".source-selector").forEach(selector=>{
         selector.addEventListener("change",event=>{
             paneSources[Number(event.target.dataset.index)]=event.target.value;
@@ -118,12 +136,30 @@ function updateTerminals(){
     document.querySelectorAll(".terminal").forEach(terminal=>{
         const selector=terminal.querySelector(".source-selector");
         if(!selector)return;
+        if(selector.value==="ROOM"){
+            const body=terminal.querySelector(".terminal-body");
+            const followTrace=isAtBottom(body);
+            const trace=roomText();
+            terminal.querySelector(".terminal-state").textContent="LIVE";
+
+            if(body.textContent!==trace){
+                body.textContent=trace;
+                if(followTrace)scrollToBottom(body);
+            }
+            return;
+        }
+
         const idiot=sourceFor(selector.value);
         if(!idiot)return;
         terminal.querySelector(".terminal-state").textContent=idiot.state;
         const body=terminal.querySelector(".terminal-body");
+        const followTrace=isAtBottom(body);
         body.className="terminal-body "+(idiot.state==="THINKING"?"thinking":"spoken");
-        body.textContent=idiot.trace||"NO TRACE YET";
+        const trace=idiot.trace||"NO TRACE YET";
+        if(body.textContent!==trace){
+            body.textContent=trace;
+            if(followTrace)scrollToBottom(body);
+        }
         const input=terminal.querySelector(".prompt-bar input");
         const button=terminal.querySelector(".prompt-bar button");
         if(input)input.disabled=idiot.state!=="IDLE";
@@ -145,9 +181,13 @@ async function refresh(){
         const response=await fetch("/api/idiots",{cache:"no-store"});
         if(!response.ok)throw new Error(response.statusText);
         const payload=await response.json();
+        const roomResponse=await fetch("/api/room",{cache:"no-store"});
+        if(!roomResponse.ok)throw new Error(roomResponse.statusText);
+        const roomPayload=await roomResponse.json();
         const previousNames=idiots.map(idiot=>idiot.name).join("\n");
         const nextNames=payload.idiots.map(idiot=>idiot.name).join("\n");
         idiots=payload.idiots;
+        roomEvents=roomPayload.events;
         renderStatus();
         if(previousNames!==nextNames)renderLayout();
         else updateTerminals();
