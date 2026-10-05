@@ -43,7 +43,7 @@ class IdiotConnections:
     async def send_message(self, idiot: Idiot, message: dict):
         prompt = json.dumps(
             {"messages": [{"message": message}]},
-            indent=2
+            separators=(",", ":")
         )
 
         if not idiot.has_received_message:
