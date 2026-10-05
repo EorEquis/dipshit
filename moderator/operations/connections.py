@@ -41,8 +41,20 @@ class IdiotConnections:
         self._websockets.pop(self._key(idiot.name), None)
 
     async def send_message(self, idiot: Idiot, message: dict):
+        idiot.message_queue.append(message)
+
+        if idiot.state == "IDLE":
+            await self.send_queued_messages(idiot)
+
+    async def send_queued_messages(self, idiot: Idiot):
+        if idiot.state != "IDLE" or not idiot.message_queue:
+            return
+
+        messages = idiot.message_queue
+        idiot.message_queue = []
+
         prompt = json.dumps(
-            {"messages": [{"message": message}]},
+            {"messages": [{"message": message} for message in messages]},
             separators=(",", ":")
         )
 
@@ -55,7 +67,13 @@ class IdiotConnections:
             idiot.has_received_message = True
 
         idiot.state = "THINKING"
-        await self.send_prompt(idiot, prompt)
+
+        try:
+            await self.send_prompt(idiot, prompt)
+        except Exception:
+            idiot.message_queue = messages + idiot.message_queue
+            idiot.state = "IDLE"
+            raise
 
     async def send_prompt(self, idiot: Idiot, prompt: str):
         websocket = self._websockets.get(self._key(idiot.name))
@@ -136,6 +154,9 @@ async def _receive_idiot_message(
 
         if state in {"IDLE", "SPEAKING", "THINKING"}:
             idiot.state = state
+
+            if state == "IDLE":
+                await connections.send_queued_messages(idiot)
 
     elif message_type == "trace":
         content = payload.get("content")
