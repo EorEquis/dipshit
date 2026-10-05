@@ -26,14 +26,15 @@ async def get_idiots():
 @app.get("/api/room")
 async def get_room():
     return {
-        "speeches": [
+        "events": [
             {
-                "complete": speech.complete,
-                "content": speech.content,
-                "speaker": speech.speaker,
-                "speech_id": speech.speech_id
+                "complete": event.complete,
+                "content": event.content,
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "source": event.source
             }
-            for speech in room
+            for event in room
         ]
     }
 
