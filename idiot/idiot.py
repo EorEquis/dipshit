@@ -247,9 +247,18 @@ async def main():
             if message.get("type") == "prompt":
                 prompt = message["prompt"]
                 print("\n========== RECEIVED FROM MODERATOR ==========")
-                try:
-                    print(json.dumps(json.loads(prompt), indent=2))
-                except json.JSONDecodeError:
+                json_start = prompt.find('{"messages":')
+                if json_start >= 0:
+                    prefix = prompt[:json_start].rstrip()
+                    if prefix:
+                        print(prefix)
+                        print()
+                    try:
+                        payload = json.loads(prompt[json_start:])
+                        print(json.dumps(payload, indent=2))
+                    except json.JSONDecodeError:
+                        print(prompt[json_start:])
+                else:
                     print(prompt)
                 print("=============================================\n")
 
