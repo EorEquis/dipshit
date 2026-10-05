@@ -12,7 +12,7 @@ from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
 from idiots.idiot import Idiot, Personality, RoomEvent
 
 
-INITIAL_PROMPT = """You are Person <botname>. You are in a room with others. You receive messages from a moderator
+INITIAL_PROMPT = """You are <botname>. You are in a room with others. You receive messages from a moderator
 or the others in the room. Decide if you wish to respond to each message.
 
 Your responses should be more engaging than simply repeating the message.
