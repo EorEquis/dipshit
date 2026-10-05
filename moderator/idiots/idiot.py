@@ -17,11 +17,12 @@ class Personality:
 
 
 @dataclass(slots=True)
-class Speech:
-    speaker: str
-    speech_id: str
+class RoomEvent:
+    source: str
+    event_id: str
+    event_type: str
     content: str = ""
-    complete: bool = False
+    complete: bool = True
 
 
 @dataclass(slots=True)
