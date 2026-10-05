@@ -29,9 +29,10 @@ PERSONALITY = {
 }
 
 
-async def _read_turn(websocket, process):
+async def _read_turn(websocket, process, process_started=False):
     recent = ""
     speaking = False
+    tracing = not process_started
 
     while True:
         chunk = await process.stdout.read(1)
@@ -57,6 +58,14 @@ async def _read_turn(websocket, process):
 
         content = chunk.decode("utf-8", errors="replace")
         recent = (recent + content)[-64:]
+
+        if not tracing:
+            if "[Start thinking]" not in recent:
+                continue
+
+            tracing = True
+            content = "[Start thinking]"
+            recent = content
 
         await websocket.send(
             json.dumps(
@@ -84,7 +93,9 @@ async def _read_turn(websocket, process):
 async def _run_inference(websocket, process, prompt):
     await websocket.send(json.dumps({"state": "THINKING", "type": "state"}))
 
-    if process is None:
+    process_started = process is None
+
+    if process_started:
         process = await asyncio.create_subprocess_exec(
             LLAMA,
             "-m",
@@ -108,7 +119,7 @@ async def _run_inference(websocket, process, prompt):
         process.stdin.write((prompt + "\n").encode("utf-8"))
         await process.stdin.drain()
 
-    await _read_turn(websocket, process)
+    await _read_turn(websocket, process, process_started)
 
     return process
 
