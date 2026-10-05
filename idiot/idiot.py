@@ -167,10 +167,6 @@ async def _read_turn(websocket, process, process_started=False):
             recent = ""
 
         if not speaking and speech_id is not None and recent.endswith("\n> "):
-            print("\n========== LLAMA TURN COMPLETE ==========")
-            print(f"recent bytes: {recent.encode('utf-8')!r}")
-            print("=========================================\n")
-
             if trace_buffer:
                 await websocket.send(
                     json.dumps(
@@ -193,11 +189,6 @@ async def _run_inference(websocket, process, prompt):
     process_started = process is None
 
     if process_started:
-        prompt_bytes = prompt.encode("utf-8")
-        print("\n========== LLAMA INITIAL PROMPT ==========")
-        print(f"bytes: {prompt_bytes!r}")
-        print("==========================================\n")
-
         process = await asyncio.create_subprocess_exec(
             LLAMA,
             "-m",
@@ -218,12 +209,7 @@ async def _run_inference(websocket, process, prompt):
                 f"llama-cli is not running (code {process.returncode})"
             )
 
-        prompt_bytes = (prompt + "\n").encode("utf-8")
-        print("\n========== WRITE TO LLAMA STDIN ==========")
-        print(f"bytes: {prompt_bytes!r}")
-        print("==========================================\n")
-
-        process.stdin.write(prompt_bytes)
+        process.stdin.write((prompt + "\n").encode("utf-8"))
         await process.stdin.drain()
 
     await _read_turn(websocket, process, process_started)
@@ -259,8 +245,12 @@ async def main():
             message = json.loads(raw_message)
 
             if message.get("type") == "prompt":
+                prompt = message["prompt"]
                 print("\n========== RECEIVED FROM MODERATOR ==========")
-                print(message["prompt"])
+                try:
+                    print(json.dumps(json.loads(prompt), indent=2))
+                except json.JSONDecodeError:
+                    print(prompt)
                 print("=============================================\n")
 
                 process = await _run_inference(
