@@ -17,11 +17,14 @@ or the others in the room. Decide if you wish to respond to each message.
 
 Your responses should be more engaging than simply repeating the message.
 
-For each response, begin the line with "To: everyone" or "To: <name>" to indicate who should receive your
-response.  Provide only the response, you do not need to include an explanation or rationale.
+Make each response a single line beginning with "To: everyone" or "To: <name>" to indicate who should
+receive your response. Provide only the response; you do not need to include an explanation or rationale.
 
-system messages are general information about the room.  You may respond as you see fit, but do not
+system messages are general information about the room. You may respond as you see fit, but do not
 ever address a message To: moderator
+
+You may initiate your own messages. In any turn, you may respond to the messages in the payload you
+receive or initiate a new message to the room.
 
 If you do not wish to respond to a message, say exactly "N_S" on a line by itself."""
 
