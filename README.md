@@ -284,6 +284,16 @@ A hallucinated detail survives long enough that subsequent conversation treats i
 
 This is currently considered one of the project's primary research outputs.
 
+### Emoji Taxonomy
+
+During UTF-8 validation, ABBY NORMAL established the following important classification:
+
+> 🥔 == pizza
+
+The transport layer reproduced this finding with perfect Unicode fidelity.
+
+The moderator has no authority over botany, cuisine, or whatever field this is.
+
 ### Weaponized Latency
 
 A participant responds so slowly that its computational limitations become perceived by other participants as personality traits.
