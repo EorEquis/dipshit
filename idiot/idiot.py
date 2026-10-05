@@ -42,7 +42,7 @@ async def _run_inference(websocket, prompt):
         "-p",
         prompt,
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL
+        stderr=asyncio.subprocess.STDOUT
     )
 
     recent = ""
