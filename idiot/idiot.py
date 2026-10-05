@@ -75,14 +75,24 @@ async def _read_turn(websocket, process, process_started=False):
             content = "[Start thinking]"
             recent = content
 
-        await websocket.send(
-            json.dumps(
-                {
-                    "content": content,
-                    "type": "trace"
-                }
+        trace_content = content
+
+        if not speaking and speech_id is not None:
+            prompt_index = recent.find("\n> ")
+
+            if prompt_index >= 0:
+                prompt_length = len(recent) - prompt_index
+                trace_content = recent[:-prompt_length]
+
+        if trace_content:
+            await websocket.send(
+                json.dumps(
+                    {
+                        "content": trace_content,
+                        "type": "trace"
+                    }
+                )
             )
-        )
 
         if speaking:
             speech_buffer += content
