@@ -5,6 +5,7 @@
 ###################
 
 import asyncio
+import codecs
 import json
 import os
 import socket
@@ -35,6 +36,7 @@ async def _read_turn(websocket, process, process_started=False):
     speech_buffer = ""
     speech_id = None
     tracing = not process_started
+    decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
 
     while True:
         chunk = await process.stdout.read(1)
@@ -58,7 +60,11 @@ async def _read_turn(websocket, process, process_started=False):
                 f"llama-cli exited unexpectedly with code {return_code}"
             )
 
-        content = chunk.decode("utf-8", errors="replace")
+        content = decoder.decode(chunk)
+
+        if not content:
+            continue
+
         recent = (recent + content)[-64:]
 
         if not tracing:
