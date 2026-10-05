@@ -4,10 +4,26 @@
 # Notes   : Connection lifecycle is separate from runtime entity storage.
 ###################
 
+import json
+
 from fastapi import WebSocket, WebSocketDisconnect
 
 from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
 from idiots.idiot import Idiot, Personality, RoomEvent
+
+
+INITIAL_PROMPT = """You are Person <botname>. You are in a room with others. You receive messages from a moderator
+or the others in the room. Decide if you wish to respond to each message.
+
+Your responses should be more engaging than simply repeating the message.
+
+For each response, begin the line with "To: everyone" or "To: <name>" to indicate who should receive your
+response.  Provide only the response, you do not need to include an explanation or rationale.
+
+system messages are general information about the room.  You may respond as you see fit, but do not
+ever address a message To: moderator
+
+If you do not wish to respond to a message, say exactly "N_S" on a line by itself."""
 
 
 class IdiotConnections:
@@ -23,6 +39,23 @@ class IdiotConnections:
 
     def remove(self, idiot: Idiot):
         self._websockets.pop(self._key(idiot.name), None)
+
+    async def send_message(self, idiot: Idiot, message: dict):
+        prompt = json.dumps(
+            {"messages": [{"message": message}]},
+            indent=2
+        )
+
+        if not idiot.has_received_message:
+            prompt = (
+                INITIAL_PROMPT.replace("<botname>", idiot.name)
+                + "\n\n"
+                + prompt
+            )
+            idiot.has_received_message = True
+
+        idiot.state = "THINKING"
+        await self.send_prompt(idiot, prompt)
 
     async def send_prompt(self, idiot: Idiot, prompt: str):
         websocket = self._websockets.get(self._key(idiot.name))
@@ -174,6 +207,7 @@ async def connect_idiot(
     try:
         payload = await websocket.receive_json()
         idiot = _parse_connection(payload)
+        existing_idiots = registry.idiots()
         registry.add(idiot)
         connections.add(idiot, websocket)
 
@@ -187,6 +221,18 @@ async def connect_idiot(
                 content=f"{idiot.name} has entered the room."
             )
         )
+
+        for existing_idiot in existing_idiots:
+            await connections.send_message(
+                existing_idiot,
+                {
+                    "sent_from": "moderator",
+                    "message_type": "system",
+                    "is_private": "no",
+                    "message_content": f"{idiot.name} has entered the room.",
+                    "message_age": "0 seconds"
+                }
+            )
 
         while True:
             payload = await websocket.receive_json()
