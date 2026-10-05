@@ -133,8 +133,11 @@ function updateTerminals(){
         const body=terminal.querySelector(".terminal-body");
         const followTrace=isAtBottom(body);
         body.className="terminal-body "+(idiot.state==="THINKING"?"thinking":"spoken");
-        body.textContent=idiot.trace||"NO TRACE YET";
-        if(followTrace)scrollToBottom(body);
+        const trace=idiot.trace||"NO TRACE YET";
+        if(body.textContent!==trace){
+            body.textContent=trace;
+            if(followTrace)scrollToBottom(body);
+        }
         const input=terminal.querySelector(".prompt-bar input");
         const button=terminal.querySelector(".prompt-bar button");
         if(input)input.disabled=idiot.state!=="IDLE";
