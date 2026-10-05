@@ -17,6 +17,14 @@ class Personality:
 
 
 @dataclass(slots=True)
+class Speech:
+    speaker: str
+    speech_id: str
+    content: str = ""
+    complete: bool = False
+
+
+@dataclass(slots=True)
 class Idiot:
     name: str
     personality: Personality
