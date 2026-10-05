@@ -34,6 +34,7 @@ class Idiot:
     )
     connection_id: UUID = field(default_factory=uuid4)
     has_received_message: bool = False
+    message_queue: list[dict] = field(default_factory=list)
     state: str = "IDLE"
     trace: str = ""
 
