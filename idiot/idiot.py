@@ -21,7 +21,7 @@ MODEL = os.path.expanduser(
     os.getenv("DIPSHIT_MODEL", "~/models/Qwen3-1.7B-Q4_K_M.gguf")
 )
 MODERATOR = os.getenv("DIPSHIT_MODERATOR", "ws://mousenas:8080/ws/idiot")
-NAME = os.getenv("DIPSHIT_NAME", socket.gethostname().upper())
+NAME = os.getenv("DIPSHIT_NAME", socket.gethostname())
 
 PERSONALITY = {
     "curiosity": int(os.getenv("DIPSHIT_CURIOSITY", "75")),
