@@ -32,6 +32,7 @@ PERSONALITY = {
 async def _read_turn(websocket, process, process_started=False):
     recent = ""
     speaking = False
+    speech_buffer = ""
     speech_id = None
     tracing = not process_started
 
@@ -78,15 +79,47 @@ async def _read_turn(websocket, process, process_started=False):
         )
 
         if speaking:
-            await websocket.send(
-                json.dumps(
-                    {
-                        "content": content,
-                        "speech_id": speech_id,
-                        "type": "speech_chunk"
-                    }
+            speech_buffer += content
+
+            if "\n[ Prompt:" in speech_buffer:
+                speech_content, speech_buffer = speech_buffer.split(
+                    "\n[ Prompt:",
+                    1
                 )
-            )
+
+                if speech_content:
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "content": speech_content,
+                                "speech_id": speech_id,
+                                "type": "speech_chunk"
+                            }
+                        )
+                    )
+
+                await websocket.send(
+                    json.dumps(
+                        {
+                            "speech_id": speech_id,
+                            "type": "speech_end"
+                        }
+                    )
+                )
+                speaking = False
+            elif len(speech_buffer) > 10:
+                speech_content = speech_buffer[:-10]
+                speech_buffer = speech_buffer[-10:]
+
+                await websocket.send(
+                    json.dumps(
+                        {
+                            "content": speech_content,
+                            "speech_id": speech_id,
+                            "type": "speech_chunk"
+                        }
+                    )
+                )
 
         if not speaking and "[End thinking]" in recent:
             await websocket.send(
@@ -104,15 +137,7 @@ async def _read_turn(websocket, process, process_started=False):
             )
             recent = ""
 
-        if speaking and recent.endswith("\n> "):
-            await websocket.send(
-                json.dumps(
-                    {
-                        "speech_id": speech_id,
-                        "type": "speech_end"
-                    }
-                )
-            )
+        if not speaking and speech_id is not None and recent.endswith("\n> "):
             await websocket.send(
                 json.dumps({"state": "IDLE", "type": "state"})
             )
