@@ -5,10 +5,8 @@
 ###################
 
 import asyncio
-import errno
 import json
 import os
-import pty
 import socket
 
 import websockets
@@ -31,66 +29,48 @@ PERSONALITY = {
 }
 
 
-async def _read_pty(master):
-    try:
-        return await asyncio.to_thread(os.read, master, 1024)
-    except OSError as error:
-        if error.errno == errno.EIO:
-            return b""
-
-        raise
-
-
 async def _run_inference(websocket, prompt):
     await websocket.send(json.dumps({"state": "THINKING", "type": "state"}))
 
-    master, slave = pty.openpty()
-
-    try:
-        process = await asyncio.create_subprocess_exec(
-            LLAMA,
-            "-m",
-            MODEL,
-            "--ctx-size",
-            CTX_SIZE,
-            "--context-shift",
-            "-p",
-            prompt,
-            stdin=slave,
-            stdout=slave,
-            stderr=slave
-        )
-    finally:
-        os.close(slave)
+    process = await asyncio.create_subprocess_exec(
+        LLAMA,
+        "-m",
+        MODEL,
+        "--ctx-size",
+        CTX_SIZE,
+        "--context-shift",
+        "--simple-io",
+        "-p",
+        prompt,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT
+    )
 
     recent = ""
 
-    try:
-        while True:
-            chunk = await _read_pty(master)
+    while True:
+        chunk = await process.stdout.read(1)
 
-            if not chunk:
-                break
+        if not chunk:
+            break
 
-            content = chunk.decode("utf-8", errors="replace")
-            recent = (recent + content)[-64:]
+        content = chunk.decode("utf-8", errors="replace")
+        recent = (recent + content)[-64:]
 
-            await websocket.send(
-                json.dumps(
-                    {
-                        "content": content,
-                        "type": "trace"
-                    }
-                )
+        await websocket.send(
+            json.dumps(
+                {
+                    "content": content,
+                    "type": "trace"
+                }
             )
+        )
 
-            if "[End thinking]" in recent:
-                await websocket.send(
-                    json.dumps({"state": "SPEAKING", "type": "state"})
-                )
-                recent = ""
-    finally:
-        os.close(master)
+        if "[End thinking]" in recent:
+            await websocket.send(
+                json.dumps({"state": "SPEAKING", "type": "state"})
+            )
+            recent = ""
 
     return_code = await process.wait()
 
