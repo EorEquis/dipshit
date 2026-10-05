@@ -5,6 +5,7 @@
 ###################
 
 import asyncio
+import codecs
 import json
 import os
 import socket
@@ -35,6 +36,8 @@ async def _read_turn(websocket, process, process_started=False):
     speech_buffer = ""
     speech_id = None
     tracing = not process_started
+    trace_buffer = ""
+    decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
 
     while True:
         chunk = await process.stdout.read(1)
@@ -58,7 +61,11 @@ async def _read_turn(websocket, process, process_started=False):
                 f"llama-cli exited unexpectedly with code {return_code}"
             )
 
-        content = chunk.decode("utf-8", errors="replace")
+        content = decoder.decode(chunk)
+
+        if not content:
+            continue
+
         recent = (recent + content)[-64:]
 
         if not tracing:
@@ -69,14 +76,35 @@ async def _read_turn(websocket, process, process_started=False):
             content = "[Start thinking]"
             recent = content
 
-        await websocket.send(
-            json.dumps(
-                {
-                    "content": content,
-                    "type": "trace"
-                }
+        trace_buffer += content
+
+        if not speaking and speech_id is not None:
+            if trace_buffer.endswith("\n> "):
+                trace_buffer = trace_buffer[:-3]
+            elif len(trace_buffer) <= len("\n> "):
+                trace_buffer = trace_buffer
+            else:
+                trace_content = trace_buffer[:-2]
+                trace_buffer = trace_buffer[-2:]
+
+                await websocket.send(
+                    json.dumps(
+                        {
+                            "content": trace_content,
+                            "type": "trace"
+                        }
+                    )
+                )
+        elif trace_buffer:
+            await websocket.send(
+                json.dumps(
+                    {
+                        "content": trace_buffer,
+                        "type": "trace"
+                    }
+                )
             )
-        )
+            trace_buffer = ""
 
         if speaking:
             speech_buffer += content
@@ -139,6 +167,16 @@ async def _read_turn(websocket, process, process_started=False):
             recent = ""
 
         if not speaking and speech_id is not None and recent.endswith("\n> "):
+            if trace_buffer:
+                await websocket.send(
+                    json.dumps(
+                        {
+                            "content": trace_buffer,
+                            "type": "trace"
+                        }
+                    )
+                )
+
             await websocket.send(
                 json.dumps({"state": "IDLE", "type": "state"})
             )
