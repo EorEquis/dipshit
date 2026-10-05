@@ -32,6 +32,7 @@ PERSONALITY = {
 async def _read_turn(websocket, process, process_started=False):
     recent = ""
     speaking = False
+    speech_id = None
     tracing = not process_started
 
     while True:
@@ -76,14 +77,42 @@ async def _read_turn(websocket, process, process_started=False):
             )
         )
 
+        if speaking:
+            await websocket.send(
+                json.dumps(
+                    {
+                        "content": content,
+                        "speech_id": speech_id,
+                        "type": "speech_chunk"
+                    }
+                )
+            )
+
         if not speaking and "[End thinking]" in recent:
             await websocket.send(
                 json.dumps({"state": "SPEAKING", "type": "state"})
             )
             speaking = True
+            speech_id = os.urandom(8).hex()
+            await websocket.send(
+                json.dumps(
+                    {
+                        "speech_id": speech_id,
+                        "type": "speech_start"
+                    }
+                )
+            )
             recent = ""
 
         if speaking and recent.endswith("\n> "):
+            await websocket.send(
+                json.dumps(
+                    {
+                        "speech_id": speech_id,
+                        "type": "speech_end"
+                    }
+                )
+            )
             await websocket.send(
                 json.dumps({"state": "IDLE", "type": "state"})
             )
