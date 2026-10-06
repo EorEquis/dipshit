@@ -16,6 +16,45 @@ import urllib.request
 import websockets
 
 
+def _load_dotenv():
+    dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+
+    try:
+        with open(dotenv_path, "r", encoding="utf-8") as dotenv_file:
+            for raw_line in dotenv_file:
+                line = raw_line.strip()
+
+                if not line or line.startswith("#"):
+                    continue
+
+                if line.startswith("export "):
+                    line = line[7:].lstrip()
+
+                key, separator, value = line.partition("=")
+                if not separator:
+                    continue
+
+                key = key.strip()
+                value = value.strip()
+
+                if not key:
+                    continue
+
+                if (
+                    len(value) >= 2
+                    and value[0] == value[-1]
+                    and value[0] in ("'", '"')
+                ):
+                    value = value[1:-1]
+
+                os.environ.setdefault(key, value)
+    except FileNotFoundError:
+        pass
+
+
+_load_dotenv()
+
+
 CTX_SIZE = os.getenv("DIPSHIT_CTX_SIZE", "4096")
 LLAMA = os.path.expanduser(
     os.getenv("DIPSHIT_LLAMA", "~/llama.cpp/build/bin/llama-cli")
