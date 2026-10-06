@@ -57,9 +57,12 @@ _load_dotenv()
 
 CTX_SIZE = os.getenv("DIPSHIT_CTX_SIZE", "4096")
 LLAMA = os.path.expanduser(os.getenv("DIPSHIT_LLAMA", "llama-cli"))
-MODEL = os.path.expanduser(
-    os.getenv("DIPSHIT_MODEL", "~/models/Qwen3-1.7B-Q4_K_M.gguf")
-)
+MODEL = os.getenv("DIPSHIT_MODEL")
+if not MODEL:
+    raise RuntimeError(
+        "DIPSHIT_MODEL must be set in idiot/.env or the process environment."
+    )
+MODEL = os.path.expanduser(MODEL)
 MODERATOR = os.getenv("DIPSHIT_MODERATOR")
 if not MODERATOR:
     raise RuntimeError(
