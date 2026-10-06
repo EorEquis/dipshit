@@ -148,4 +148,21 @@ subprocess.run(
     check=True,
 )
 
+if os.name == "nt":
+    process = subprocess.Popen([PYTHON, IDIOT, *sys.argv[1:]])
+    try:
+        raise SystemExit(process.wait())
+    except KeyboardInterrupt:
+        # On Windows the venv launcher can outlive the console process that
+        # received Ctrl-C. Explicitly terminate the entire child process tree
+        # so the idiot cannot remain connected to the moderator.
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        process.wait()
+        raise SystemExit(130)
+
 os.execv(PYTHON, [PYTHON, IDIOT, *sys.argv[1:]])
