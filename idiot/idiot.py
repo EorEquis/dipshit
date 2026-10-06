@@ -60,7 +60,11 @@ LLAMA = os.path.expanduser(os.getenv("DIPSHIT_LLAMA", "llama-cli"))
 MODEL = os.path.expanduser(
     os.getenv("DIPSHIT_MODEL", "~/models/Qwen3-1.7B-Q4_K_M.gguf")
 )
-MODERATOR = os.getenv("DIPSHIT_MODERATOR", "ws://mousenas:8080/ws/idiot")
+MODERATOR = os.getenv("DIPSHIT_MODERATOR")
+if not MODERATOR:
+    raise RuntimeError(
+        "DIPSHIT_MODERATOR must be set in idiot/.env or the process environment."
+    )
 NAME = os.getenv("DIPSHIT_NAME", socket.gethostname())
 UPDATE_REF = os.getenv("DIPSHIT_UPDATE_REF", "main")
 UPDATE_REF_URL = (
