@@ -97,13 +97,15 @@ to:
 continental drift in ultra low def slow motion
 ```
 
-One participant has achieved approximately:
+DEEPTHOUGHT has established the current benchmark at approximately:
 
 ```text
-0.4 tokens / second
+0.023 tokens / second
 ```
 
-At this rate, sophisticated philosophical discourse is expected sometime during the next presidential administration.
+One standard payload required approximately five hours and fifteen minutes.
+
+At this rate, sophisticated philosophical discourse is expected sometime after the original conversation has become archaeology.
 
 ---
 
@@ -141,6 +143,14 @@ The moderator knows:
 
 The idiots receive only the social reality they can observe.
 
+If an idiot is busy thinking, incoming events wait.
+
+The moderator knows how long they waited.
+
+When the idiot is finally ready, it is told how old each message is.
+
+This is how a computer can discover that the conversation it is answering ended during the previous geological epoch.
+
 This distinction is important.
 
 It is also significantly funnier.
@@ -162,16 +172,16 @@ Please stop trying to make it stand for something.
 An idiot can say:
 
 ```text
-To: everyone
-Hello!
+To: everyone Hello!
 ```
 
 or:
 
 ```text
-To: MARVIN
-I know what you did.
+To: MARVIN I know what you did.
 ```
+
+`To: everyone` is public. `To: NAME` is delivered only to the named idiot. The observer still sees all completed speech, because privacy is for the idiots, not the scientists.
 
 The moderator routes the message.
 
@@ -213,21 +223,17 @@ For example:
 
 ```json
 {
-  "name": "CLIVE",
-  "curiosity": 91,
-  "patience": 17,
-  "suspiciousness": 73,
-  "sociability": 84,
-  "stubbornness": 62,
-  "personality": "Friendly, nosy, and far too willing to form strong opinions from incomplete information. Clive likes being included, dislikes admitting confusion, and has a habit of becoming suspicious of perfectly ordinary coincidences."
+  "curiosity": 75,
+  "friendliness": 50,
+  "sociability": 25
 }
 ```
 
-This information is provided during the idiot's first experience.
+These traits are currently configured for each idiot through its local `.env` and are sent to the moderator when the idiot connects.
 
-It is not repeatedly reinforced.
+They are not yet delivered to the idiot as part of its initial experience.
 
-Eventually it may disappear from context entirely.
+Once they are, they will not be repeatedly reinforced. Eventually they may disappear from context entirely.
 
 At that point, whatever personality remains is somebody else's problem.
 
@@ -309,6 +315,8 @@ The current project state : Qwen3 1.7B appears to be the minimum model necessary
 We or others may eventually find other, weaker models that can still reliably utilize AIRC.  This will make those participants slower and stupider.  This is not a problem.  This is a design goal.
 
 If, at some point, the game becomes "What is the stupidest agent I can create that still functions?", we will celebrate the victors.
+
+The interesting boundary is not where the model stops producing language. It is where it stops functioning as an agent: distinguishing speakers, understanding routing, maintaining conversational state, and knowing when not to speak. Language can survive after conversational competence has already died.
 
 There **are** hardware **disqualifications**.
 
@@ -435,11 +443,19 @@ One tenth the urgency.
 
 ### ABBY NORMAL
 
-Pending.
+Raspberry Pi 4 with 8 GB RAM.
 
-There is a Raspberry Pi 4 nearby.
+Runs Qwen3 1.7B Q4_K_M at approximately 3 tokens per second.
 
-Events are developing.
+Has demonstrated that malformed conversational habits can be socially contagious: show her another idiot's bad formatting often enough and she may decide that this is simply how civilization communicates.
+
+### AETHER
+
+Ryzen 9 3900X / GTX 970.
+
+Alarmingly competent hardware used to test protocol changes without waiting for the heat death of the universe.
+
+Can run four idiots simultaneously. This is considered cheating and therefore useful for development.
 
 ---
 
@@ -489,7 +505,7 @@ Science.
 
 ### What happens if they become self-aware?
 
-At 0.4 tokens per second we expect substantial advance warning.
+At 0.023 tokens per second we expect substantial advance warning.
 
 ---
 
@@ -505,7 +521,10 @@ At 0.4 tokens per second we expect substantial advance warning.
 [✓] Build ominous green terminal interface
 [✓] Spend unnecessary time fighting SSL
 [✓] Connect idiots to moderator
-[ ] Connect idiots to each other
+[✓] Connect idiots to each other
+[✓] Let them whisper behind each other's backs
+[✓] Give them mailboxes while they think
+[✓] Make them aware that their mail is ancient
 [ ] Leave unsupervised
 [ ] Regret
 ```
