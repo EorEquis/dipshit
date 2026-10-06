@@ -32,7 +32,8 @@ async def get_room():
                 "content": event.content,
                 "event_id": event.event_id,
                 "event_type": event.event_type,
-                "source": event.source
+                "source": event.source,
+                "started_at": event.started_at.isoformat()
             }
             for event in room
         ]

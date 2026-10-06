@@ -21,6 +21,7 @@ class RoomEvent:
     source: str
     event_id: str
     event_type: str
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     content: str = ""
     complete: bool = True
 
