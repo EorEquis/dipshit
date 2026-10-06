@@ -131,7 +131,12 @@ def _update_client():
 
 
 if _update_client():
-    os.execv(sys.executable, [sys.executable, os.path.abspath(__file__), *sys.argv[1:]])
+    restart_args = [sys.executable, os.path.abspath(__file__), *sys.argv[1:]]
+
+    if os.name == "nt":
+        raise SystemExit(subprocess.call(restart_args))
+
+    os.execv(sys.executable, restart_args)
 
 if os.name == "nt":
     PYTHON = os.path.join(VENV, "Scripts", "python.exe")
