@@ -4,10 +4,15 @@
 # Notes   : Connection lifecycle is separate from runtime entity storage.
 ###################
 
+import json
+
 from fastapi import WebSocket, WebSocketDisconnect
 
 from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
 from idiots.idiot import Idiot, Personality, RoomEvent
+
+
+INITIAL_PROMPT = """You are <botname>. You are in a room with other people. You receive messages. Decide if you wish to respond to each message. Your messages should be more engaging than simply repeating what you received. Your response may contain multiple messages. Make each message a single line beginning with "To: everyone" or "To: <name>" to indicate who should receive your message. Provide only your messages; you do not need to include an explanation or rationale. system messages are general information about the room. Do not ever address a message to the moderator. You may initiate your own messages. In any turn, you may respond to the messages in the payload you receive or initiate a new message. If you do not wish to respond to a message, say exactly "N_S" on a line by itself. """
 
 
 class IdiotConnections:
@@ -23,6 +28,41 @@ class IdiotConnections:
 
     def remove(self, idiot: Idiot):
         self._websockets.pop(self._key(idiot.name), None)
+
+    async def send_message(self, idiot: Idiot, message: dict):
+        idiot.message_queue.append(message)
+
+        if idiot.state == "IDLE":
+            await self.send_queued_messages(idiot)
+
+    async def send_queued_messages(self, idiot: Idiot):
+        if idiot.state != "IDLE" or not idiot.message_queue:
+            return
+
+        messages = idiot.message_queue
+        idiot.message_queue = []
+
+        prompt = json.dumps(
+            {"messages": [{"message": message} for message in messages]},
+            separators=(",", ":")
+        )
+
+        if not idiot.has_received_message:
+            prompt = (
+                INITIAL_PROMPT.replace("<botname>", idiot.name)
+                + "\n\n"
+                + prompt
+            )
+            idiot.has_received_message = True
+
+        idiot.state = "THINKING"
+
+        try:
+            await self.send_prompt(idiot, prompt)
+        except Exception:
+            idiot.message_queue = messages + idiot.message_queue
+            idiot.state = "IDLE"
+            raise
 
     async def send_prompt(self, idiot: Idiot, prompt: str):
         websocket = self._websockets.get(self._key(idiot.name))
@@ -86,7 +126,13 @@ def _parse_personality(payload):
     )
 
 
-async def _receive_idiot_message(idiot: Idiot, payload, room):
+async def _receive_idiot_message(
+    idiot: Idiot,
+    payload,
+    registry: IdiotRegistry,
+    connections: IdiotConnections,
+    room
+):
     if not isinstance(payload, dict):
         return
 
@@ -97,6 +143,9 @@ async def _receive_idiot_message(idiot: Idiot, payload, room):
 
         if state in {"IDLE", "SPEAKING", "THINKING"}:
             idiot.state = state
+
+            if state == "IDLE":
+                await connections.send_queued_messages(idiot)
 
     elif message_type == "trace":
         content = payload.get("content")
@@ -150,6 +199,26 @@ async def _receive_idiot_message(idiot: Idiot, payload, room):
         if speech is not None:
             speech.complete = True
 
+            if speech.content.strip() == "N_S":
+                room.remove(speech)
+                return
+
+            if speech.content.lstrip().casefold().startswith("to: everyone"):
+                for recipient in registry.idiots():
+                    if recipient is idiot:
+                        continue
+
+                    await connections.send_message(
+                        recipient,
+                        {
+                            "sent_from": idiot.name,
+                            "message_type": "speech",
+                            "is_private": "no",
+                            "message_content": speech.content.strip(),
+                            "message_age": "0 seconds"
+                        }
+                    )
+
 
 async def _reject_connection(websocket, error):
     await websocket.send_json(
@@ -174,6 +243,7 @@ async def connect_idiot(
     try:
         payload = await websocket.receive_json()
         idiot = _parse_connection(payload)
+        existing_idiots = registry.idiots()
         registry.add(idiot)
         connections.add(idiot, websocket)
 
@@ -188,9 +258,27 @@ async def connect_idiot(
             )
         )
 
+        for existing_idiot in existing_idiots:
+            await connections.send_message(
+                existing_idiot,
+                {
+                    "sent_from": "moderator",
+                    "message_type": "system",
+                    "is_private": "no",
+                    "message_content": f"{idiot.name} has entered the room.",
+                    "message_age": "0 seconds"
+                }
+            )
+
         while True:
             payload = await websocket.receive_json()
-            await _receive_idiot_message(idiot, payload, room)
+            await _receive_idiot_message(
+                idiot,
+                payload,
+                registry,
+                connections,
+                room
+            )
 
     except IdiotAlreadyConnectedError as error:
         await _reject_connection(websocket, str(error))

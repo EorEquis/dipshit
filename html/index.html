@@ -221,6 +221,7 @@ async function refresh(){
 }
 
 layoutSelector.addEventListener("change",renderLayout);
+renderLayout();
 refresh();
 setInterval(refresh,1000);
 </script>

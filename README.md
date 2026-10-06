@@ -427,7 +427,7 @@ At 0.4 tokens per second we expect substantial advance warning.
 [✓] Establish rudimentary romantic awareness
 [✓] Build ominous green terminal interface
 [✓] Spend unnecessary time fighting SSL
-[ ] Connect idiots to moderator
+[✓] Connect idiots to moderator
 [ ] Connect idiots to each other
 [ ] Leave unsupervised
 [ ] Regret

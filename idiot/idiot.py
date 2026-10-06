@@ -9,25 +9,119 @@ import codecs
 import json
 import os
 import socket
+import sys
+import urllib.error
+import urllib.request
 
 import websockets
 
 
+def _load_dotenv():
+    dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+
+    try:
+        with open(dotenv_path, "r", encoding="utf-8") as dotenv_file:
+            for raw_line in dotenv_file:
+                line = raw_line.strip()
+
+                if not line or line.startswith("#"):
+                    continue
+
+                if line.startswith("export "):
+                    line = line[7:].lstrip()
+
+                key, separator, value = line.partition("=")
+                if not separator:
+                    continue
+
+                key = key.strip()
+                value = value.strip()
+
+                if not key:
+                    continue
+
+                if (
+                    len(value) >= 2
+                    and value[0] == value[-1]
+                    and value[0] in ("'", '"')
+                ):
+                    value = value[1:-1]
+
+                os.environ.setdefault(key, value)
+    except FileNotFoundError:
+        pass
+
+
+_load_dotenv()
+
+
 CTX_SIZE = os.getenv("DIPSHIT_CTX_SIZE", "4096")
-LLAMA = os.path.expanduser(
-    os.getenv("DIPSHIT_LLAMA", "~/llama.cpp/build/bin/llama-cli")
-)
+LLAMA = os.path.expanduser(os.getenv("DIPSHIT_LLAMA", "llama-cli"))
 MODEL = os.path.expanduser(
     os.getenv("DIPSHIT_MODEL", "~/models/Qwen3-1.7B-Q4_K_M.gguf")
 )
 MODERATOR = os.getenv("DIPSHIT_MODERATOR", "ws://mousenas:8080/ws/idiot")
-NAME = os.getenv("DIPSHIT_NAME", socket.gethostname().upper())
+NAME = os.getenv("DIPSHIT_NAME", socket.gethostname())
+UPDATE_REF = os.getenv("DIPSHIT_UPDATE_REF", "main")
+UPDATE_REF_URL = (
+    "https://api.github.com/repos/EorEquis/dipshit/commits/"
+    f"{UPDATE_REF}"
+)
 
 PERSONALITY = {
     "curiosity": int(os.getenv("DIPSHIT_CURIOSITY", "75")),
     "friendliness": int(os.getenv("DIPSHIT_FRIENDLINESS", "50")),
     "sociability": int(os.getenv("DIPSHIT_SOCIABILITY", "25"))
 }
+
+
+def _update_client():
+    current_path = os.path.abspath(__file__)
+
+    try:
+        with urllib.request.urlopen(UPDATE_REF_URL, timeout=10) as response:
+            commit = json.loads(response.read())
+        commit_sha = commit["sha"]
+        update_url = (
+            "https://raw.githubusercontent.com/EorEquis/dipshit/"
+            f"{commit_sha}/idiot/idiot.py"
+        )
+        with urllib.request.urlopen(update_url, timeout=10) as response:
+            updated_code = response.read()
+    except (KeyError, json.JSONDecodeError, OSError, urllib.error.URLError) as error:
+        print(f"Client update check failed: {error}")
+        return
+
+    try:
+        with open(current_path, "rb") as current_file:
+            current_code = current_file.read()
+    except OSError as error:
+        print(f"Could not read current client for update check: {error}")
+        return
+
+    if updated_code == current_code:
+        return
+
+    temporary_path = current_path + ".update"
+
+    try:
+        with open(temporary_path, "wb") as temporary_file:
+            temporary_file.write(updated_code)
+            temporary_file.flush()
+            os.fsync(temporary_file.fileno())
+
+        os.replace(temporary_path, current_path)
+    except OSError as error:
+        try:
+            os.remove(temporary_path)
+        except OSError:
+            pass
+
+        print(f"Client update failed: {error}")
+        return
+
+    print(f"Client updated from {UPDATE_REF}; restarting.")
+    os.execv(sys.executable, [sys.executable, current_path, *sys.argv[1:]])
 
 
 async def _read_turn(websocket, process, process_started=False):
@@ -245,6 +339,23 @@ async def main():
             message = json.loads(raw_message)
 
             if message.get("type") == "prompt":
+                prompt = message["prompt"]
+                print("\n========== RECEIVED FROM MODERATOR ==========")
+                json_start = prompt.find('{"messages":')
+                if json_start >= 0:
+                    prefix = prompt[:json_start].rstrip()
+                    if prefix:
+                        print(prefix)
+                        print()
+                    try:
+                        payload = json.loads(prompt[json_start:])
+                        print(json.dumps(payload, indent=2))
+                    except json.JSONDecodeError:
+                        print(prompt[json_start:])
+                else:
+                    print(prompt)
+                print("=============================================\n")
+
                 process = await _run_inference(
                     websocket,
                     process,
@@ -253,4 +364,6 @@ async def main():
 
 
 if __name__ == "__main__":
+    print("D.I.P.S.H.I.T. idiot client online.")
+    _update_client()
     asyncio.run(main())
