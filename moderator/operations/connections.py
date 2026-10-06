@@ -5,6 +5,7 @@
 ###################
 
 import json
+from datetime import datetime, timezone
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -12,7 +13,7 @@ from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
 from idiots.idiot import Idiot, Personality, RoomEvent
 
 
-INITIAL_PROMPT = """You are <botname>. You are in a room with other people. You receive messages. Decide if you wish to respond to each message. Your messages should be more engaging than simply repeating what you received. Your response may contain multiple messages. Make each message a single line beginning with "To: everyone" or "To: <name>" to indicate who should receive your message. Replace <name> with the name of the person you are addressing. Provide only your messages; you do not need to include an explanation or rationale. system messages are general information about the room. Do not ever address a message to the moderator. You may initiate your own messages. In any turn, you may respond to the messages in the payload you receive or initiate a new message. If you do not wish to respond to a message, say exactly "N_S" on a line by itself. """
+INITIAL_PROMPT = """You are <botname>. You are in a room with other people. You receive messages. Decide if you wish to respond to each message. Your messages should be more engaging than simply repeating what you received. Your response may contain multiple messages. Each message must be a SINGLE LINE with NO LINE BREAKS beginning with "To: everyone" or "To: <name>" to indicate who should receive your message. Replace <name> with the name of the person you are addressing. Provide only your messages; you do not need to include an explanation or rationale. system messages are general information about the room. You may act upon this information however you wish, but do not address a message To: moderator. You may initiate your own messages. In any turn, you may respond to the messages in the payload you receive or initiate a new message. If you do not wish to respond to a message, say exactly "N_S" on a line by itself. """
 
 
 class IdiotConnections:
@@ -30,7 +31,12 @@ class IdiotConnections:
         self._websockets.pop(self._key(idiot.name), None)
 
     async def send_message(self, idiot: Idiot, message: dict):
-        idiot.message_queue.append(message)
+        idiot.message_queue.append(
+            {
+                "message": message,
+                "queued_at": datetime.now(timezone.utc)
+            }
+        )
 
         if idiot.state == "IDLE":
             await self.send_queued_messages(idiot)
@@ -39,8 +45,20 @@ class IdiotConnections:
         if idiot.state != "IDLE" or not idiot.message_queue:
             return
 
-        messages = idiot.message_queue
+        queued_messages = idiot.message_queue
         idiot.message_queue = []
+        delivered_at = datetime.now(timezone.utc)
+
+        messages = []
+
+        for queued_message in queued_messages:
+            message = queued_message["message"].copy()
+            age_seconds = max(
+                0,
+                int((delivered_at - queued_message["queued_at"]).total_seconds())
+            )
+            message["message_age"] = f"{age_seconds} seconds"
+            messages.append(message)
 
         prompt = json.dumps(
             {"messages": [{"message": message} for message in messages]},
@@ -60,7 +78,7 @@ class IdiotConnections:
         try:
             await self.send_prompt(idiot, prompt)
         except Exception:
-            idiot.message_queue = messages + idiot.message_queue
+            idiot.message_queue = queued_messages + idiot.message_queue
             idiot.state = "IDLE"
             raise
 
@@ -203,18 +221,44 @@ async def _receive_idiot_message(
                 room.remove(speech)
                 return
 
-            if speech.content.lstrip().casefold().startswith("to: everyone"):
-                for recipient in registry.idiots():
-                    if recipient is idiot:
-                        continue
+            messages = [
+                line.strip()
+                for line in speech.content.splitlines()
+                if line.strip().casefold().startswith("to:")
+            ]
 
+            for content in messages:
+                routing, separator, remainder = content.partition(":")
+
+                if not separator or routing.strip().casefold() != "to":
+                    continue
+
+                recipient_name = remainder.split(None, 1)[0].rstrip(",")
+
+                if recipient_name.casefold() == "everyone":
+                    recipients = [
+                        recipient
+                        for recipient in registry.idiots()
+                        if recipient is not idiot
+                    ]
+                    is_private = "no"
+                else:
+                    recipient = registry.get(recipient_name)
+                    recipients = (
+                        [recipient]
+                        if recipient is not None and recipient is not idiot
+                        else []
+                    )
+                    is_private = "yes"
+
+                for recipient in recipients:
                     await connections.send_message(
                         recipient,
                         {
                             "sent_from": idiot.name,
                             "message_type": "speech",
-                            "is_private": "no",
-                            "message_content": speech.content.strip(),
+                            "is_private": is_private,
+                            "message_content": content,
                             "message_age": "0 seconds"
                         }
                     )
