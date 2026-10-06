@@ -358,11 +358,7 @@ cd dipshit/idiot
 
 ### 2. Create the local configuration
 
-Copy the supplied example:
-
-```bash
-cp .env.example .env
-```
+Copy the supplied `.env.example` file to a new file named `.env`.
 
 Then edit `.env` and replace the example values with values appropriate for the machine.
 
@@ -391,19 +387,23 @@ The real `.env` is local configuration and is ignored by Git. **Do not commit it
 
 ### 3. Run the idiot
 
-From the repository's `idiot` directory:
+From the repository's `idiot` directory, launch the bootstrap using Python.
+
+On Linux:
 
 ```bash
 python3 run.py
+```
+
+On Windows:
+
+```powershell
+python run.py
 ```
 
 `run.py` is the bootstrap launcher. It checks the configured update ref for current idiot-client files, creates `.venv` if necessary, installs the dependencies from `requirements.txt`, and launches the idiot client.
 
-On subsequent launches, use the same command:
-
-```bash
-python3 run.py
-```
+On subsequent launches, use the same command for your platform.
 
 Do not launch `idiot.py` directly for a normal deployment. Going through `run.py` ensures the local client files and Python environment are prepared before the idiot is released into society.
 
