@@ -203,10 +203,18 @@ async def _receive_idiot_message(
                 room.remove(speech)
                 return
 
-            content = speech.content.strip()
-            routing, separator, remainder = content.partition(":")
+            messages = [
+                line.strip()
+                for line in speech.content.splitlines()
+                if line.strip().casefold().startswith("to:")
+            ]
 
-            if separator and routing.strip().casefold() == "to":
+            for content in messages:
+                routing, separator, remainder = content.partition(":")
+
+                if not separator or routing.strip().casefold() != "to":
+                    continue
+
                 recipient_name = remainder.split(None, 1)[0].rstrip(",")
 
                 if recipient_name.casefold() == "everyone":
