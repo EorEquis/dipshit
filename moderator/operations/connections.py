@@ -204,15 +204,10 @@ async def _receive_idiot_message(
                 return
 
             content = speech.content.strip()
-            routing, separator, _ = content.partition(",")
+            routing, separator, remainder = content.partition(":")
 
-            if not separator:
-                routing, _, _ = content.partition(" ")
-
-            prefix, separator, recipient_name = routing.partition(":")
-
-            if separator and prefix.strip().casefold() == "to":
-                recipient_name = recipient_name.strip()
+            if separator and routing.strip().casefold() == "to":
+                recipient_name = remainder.split(None, 1)[0].rstrip(",")
 
                 if recipient_name.casefold() == "everyone":
                     recipients = [
