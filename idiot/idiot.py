@@ -26,9 +26,9 @@ MODEL = os.path.expanduser(
 MODERATOR = os.getenv("DIPSHIT_MODERATOR", "ws://mousenas:8080/ws/idiot")
 NAME = os.getenv("DIPSHIT_NAME", socket.gethostname())
 UPDATE_REF = os.getenv("DIPSHIT_UPDATE_REF", "main")
-UPDATE_URL = (
-    "https://raw.githubusercontent.com/EorEquis/dipshit/"
-    f"{UPDATE_REF}/idiot/idiot.py"
+UPDATE_REF_URL = (
+    "https://api.github.com/repos/EorEquis/dipshit/commits/"
+    f"{UPDATE_REF}"
 )
 
 PERSONALITY = {
@@ -42,9 +42,16 @@ def _update_client():
     current_path = os.path.abspath(__file__)
 
     try:
-        with urllib.request.urlopen(UPDATE_URL, timeout=10) as response:
+        with urllib.request.urlopen(UPDATE_REF_URL, timeout=10) as response:
+            commit = json.loads(response.read())
+        commit_sha = commit["sha"]
+        update_url = (
+            "https://raw.githubusercontent.com/EorEquis/dipshit/"
+            f"{commit_sha}/idiot/idiot.py"
+        )
+        with urllib.request.urlopen(update_url, timeout=10) as response:
             updated_code = response.read()
-    except (OSError, urllib.error.URLError) as error:
+    except (KeyError, json.JSONDecodeError, OSError, urllib.error.URLError) as error:
         print(f"Client update check failed: {error}")
         return
 
