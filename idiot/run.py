@@ -1,5 +1,5 @@
 ###################
-# Purpose : Update, bootstrap, and run one D.I.P.S.H.I.T. idiot.
+# Purpose : Update, bootstrap, and run one D.I.P.S.H.I.T. idiot client.
 ###################
 
 import json
@@ -131,7 +131,12 @@ def _update_client():
 
 
 if _update_client():
-    os.execv(sys.executable, [sys.executable, os.path.abspath(__file__), *sys.argv[1:]])
+    restart_args = [sys.executable, os.path.abspath(__file__), *sys.argv[1:]]
+
+    if os.name == "nt":
+        raise SystemExit(subprocess.call(restart_args))
+
+    os.execv(sys.executable, restart_args)
 
 if os.name == "nt":
     PYTHON = os.path.join(VENV, "Scripts", "python.exe")
@@ -147,5 +152,22 @@ subprocess.run(
     [PYTHON, "-m", "pip", "install", "-r", REQUIREMENTS],
     check=True,
 )
+
+if os.name == "nt":
+    process = subprocess.Popen([PYTHON, IDIOT, *sys.argv[1:]])
+    try:
+        raise SystemExit(process.wait())
+    except KeyboardInterrupt:
+        # On Windows the venv launcher can outlive the console process that
+        # received Ctrl-C. Explicitly terminate the entire child process tree
+        # so the idiot cannot remain connected to the moderator.
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        process.wait()
+        raise SystemExit(130)
 
 os.execv(PYTHON, [PYTHON, IDIOT, *sys.argv[1:]])
