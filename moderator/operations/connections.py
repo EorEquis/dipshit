@@ -203,18 +203,41 @@ async def _receive_idiot_message(
                 room.remove(speech)
                 return
 
-            if speech.content.lstrip().casefold().startswith("to: everyone"):
-                for recipient in registry.idiots():
-                    if recipient is idiot:
-                        continue
+            content = speech.content.strip()
+            routing, separator, _ = content.partition(",")
 
+            if not separator:
+                routing, _, _ = content.partition(" ")
+
+            prefix, separator, recipient_name = routing.partition(":")
+
+            if separator and prefix.strip().casefold() == "to":
+                recipient_name = recipient_name.strip()
+
+                if recipient_name.casefold() == "everyone":
+                    recipients = [
+                        recipient
+                        for recipient in registry.idiots()
+                        if recipient is not idiot
+                    ]
+                    is_private = "no"
+                else:
+                    recipient = registry.get(recipient_name)
+                    recipients = (
+                        [recipient]
+                        if recipient is not None and recipient is not idiot
+                        else []
+                    )
+                    is_private = "yes"
+
+                for recipient in recipients:
                     await connections.send_message(
                         recipient,
                         {
                             "sent_from": idiot.name,
                             "message_type": "speech",
-                            "is_private": "no",
-                            "message_content": speech.content.strip(),
+                            "is_private": is_private,
+                            "message_content": content,
                             "message_age": "0 seconds"
                         }
                     )
