@@ -9,6 +9,9 @@ import codecs
 import json
 import os
 import socket
+import sys
+import urllib.error
+import urllib.request
 
 import websockets
 
@@ -22,12 +25,59 @@ MODEL = os.path.expanduser(
 )
 MODERATOR = os.getenv("DIPSHIT_MODERATOR", "ws://mousenas:8080/ws/idiot")
 NAME = os.getenv("DIPSHIT_NAME", socket.gethostname())
+UPDATE_REF = os.getenv("DIPSHIT_UPDATE_REF", "main")
+UPDATE_URL = (
+    "https://raw.githubusercontent.com/EorEquis/dipshit/"
+    f"{UPDATE_REF}/idiot/idiot.py"
+)
 
 PERSONALITY = {
     "curiosity": int(os.getenv("DIPSHIT_CURIOSITY", "75")),
     "friendliness": int(os.getenv("DIPSHIT_FRIENDLINESS", "50")),
     "sociability": int(os.getenv("DIPSHIT_SOCIABILITY", "25"))
 }
+
+
+def _update_client():
+    current_path = os.path.abspath(__file__)
+
+    try:
+        with urllib.request.urlopen(UPDATE_URL, timeout=10) as response:
+            updated_code = response.read()
+    except (OSError, urllib.error.URLError) as error:
+        print(f"Client update check failed: {error}")
+        return
+
+    try:
+        with open(current_path, "rb") as current_file:
+            current_code = current_file.read()
+    except OSError as error:
+        print(f"Could not read current client for update check: {error}")
+        return
+
+    if updated_code == current_code:
+        return
+
+    temporary_path = current_path + ".update"
+
+    try:
+        with open(temporary_path, "wb") as temporary_file:
+            temporary_file.write(updated_code)
+            temporary_file.flush()
+            os.fsync(temporary_file.fileno())
+
+        os.replace(temporary_path, current_path)
+    except OSError as error:
+        try:
+            os.remove(temporary_path)
+        except OSError:
+            pass
+
+        print(f"Client update failed: {error}")
+        return
+
+    print(f"Client updated from {UPDATE_REF}; restarting.")
+    os.execv(sys.executable, [sys.executable, current_path, *sys.argv[1:]])
 
 
 async def _read_turn(websocket, process, process_started=False):
@@ -270,4 +320,5 @@ async def main():
 
 
 if __name__ == "__main__":
+    _update_client()
     asyncio.run(main())
