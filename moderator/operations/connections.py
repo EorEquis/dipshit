@@ -5,6 +5,7 @@
 ###################
 
 import json
+from datetime import datetime, timezone
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -30,7 +31,12 @@ class IdiotConnections:
         self._websockets.pop(self._key(idiot.name), None)
 
     async def send_message(self, idiot: Idiot, message: dict):
-        idiot.message_queue.append(message)
+        idiot.message_queue.append(
+            {
+                "message": message,
+                "queued_at": datetime.now(timezone.utc)
+            }
+        )
 
         if idiot.state == "IDLE":
             await self.send_queued_messages(idiot)
@@ -39,8 +45,20 @@ class IdiotConnections:
         if idiot.state != "IDLE" or not idiot.message_queue:
             return
 
-        messages = idiot.message_queue
+        queued_messages = idiot.message_queue
         idiot.message_queue = []
+        delivered_at = datetime.now(timezone.utc)
+
+        messages = []
+
+        for queued_message in queued_messages:
+            message = queued_message["message"].copy()
+            age_seconds = max(
+                0,
+                int((delivered_at - queued_message["queued_at"]).total_seconds())
+            )
+            message["message_age"] = f"{age_seconds} seconds"
+            messages.append(message)
 
         prompt = json.dumps(
             {"messages": [{"message": message} for message in messages]},
@@ -60,7 +78,7 @@ class IdiotConnections:
         try:
             await self.send_prompt(idiot, prompt)
         except Exception:
-            idiot.message_queue = messages + idiot.message_queue
+            idiot.message_queue = queued_messages + idiot.message_queue
             idiot.state = "IDLE"
             raise
 
