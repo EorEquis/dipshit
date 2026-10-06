@@ -1,5 +1,5 @@
 ###################
-# Purpose : Update, bootstrap, and run one D.I.P.S.H.I.T. idiot.
+# Purpose : Update, bootstrap, and run one D.I.P.S.H.I.T. idiot client.
 ###################
 
 import json
