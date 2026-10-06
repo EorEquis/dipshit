@@ -327,6 +327,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    print("D.I.P.S.H.I.T. idiot client update test.")
+    print("D.I.P.S.H.I.T. idiot client online.")
     _update_client()
     asyncio.run(main())
