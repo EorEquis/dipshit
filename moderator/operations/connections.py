@@ -239,6 +239,7 @@ async def connect_idiot(
     await websocket.accept()
 
     idiot = None
+    joined = False
 
     try:
         payload = await websocket.receive_json()
@@ -246,6 +247,7 @@ async def connect_idiot(
         existing_idiots = registry.idiots()
         registry.add(idiot)
         connections.add(idiot, websocket)
+        joined = True
 
         await websocket.send_json(idiot.connected_payload())
 
@@ -293,3 +295,25 @@ async def connect_idiot(
         if idiot is not None:
             connections.remove(idiot)
             registry.remove(idiot)
+
+        if joined:
+            room.append(
+                RoomEvent(
+                    source="MODERATOR",
+                    event_id=str(idiot.connection_id),
+                    event_type="presence",
+                    content=f"{idiot.name} has left the room."
+                )
+            )
+
+            for remaining_idiot in registry.idiots():
+                await connections.send_message(
+                    remaining_idiot,
+                    {
+                        "sent_from": "moderator",
+                        "message_type": "system",
+                        "is_private": "no",
+                        "message_content": f"{idiot.name} has left the room.",
+                        "message_age": "0 seconds"
+                    }
+                )
