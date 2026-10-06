@@ -12,21 +12,7 @@ from idiots._idiots import IdiotAlreadyConnectedError, IdiotRegistry
 from idiots.idiot import Idiot, Personality, RoomEvent
 
 
-INITIAL_PROMPT = """You are <botname>. You are in a room with others. You receive messages from a moderator
-or the others in the room. Decide if you wish to respond to each message.
-
-Your responses should be more engaging than simply repeating the message.
-
-Make each response a single line beginning with "To: everyone" or "To: <name>" to indicate who should
-receive your response. Provide only the response; you do not need to include an explanation or rationale.
-
-system messages are general information about the room. You may respond as you see fit, but do not
-ever address a message To: moderator
-
-You may initiate your own messages. In any turn, you may respond to the messages in the payload you
-receive or initiate a new message to the room.
-
-If you do not wish to respond to a message, say exactly "N_S" on a line by itself."""
+INITIAL_PROMPT = """You are <botname>. You are in a room with other people. You receive messages. Decide if you wish to respond to each message. Your messages should be more engaging than simply repeating what you received. Your response may contain multiple messages. Make each message a single line beginning with "To: everyone" or "To: <name>" to indicate who should receive your message. Provide only your messages; you do not need to include an explanation or rationale. system messages are general information about the room. Do not ever address a message to the moderator. You may initiate your own messages. In any turn, you may respond to the messages in the payload you receive or initiate a new message. If you do not wish to respond to a message, say exactly "N_S" on a line by itself. """
 
 
 class IdiotConnections:
